@@ -188,12 +188,12 @@
 : WHILE IMMEDIATE
 	['] 0BRANCH ,	\ compile 0BRANCH
 	DP @		\ save location of the offset2 on the stack
+	SWAP		\ get the original offset (from BEGIN)
 	0 ,		\ compile a dummy offset2
 ;
 
 : REPEAT IMMEDIATE
 	['] BRANCH ,	\ compile BRANCH
-	SWAP		\ get the original offset (from BEGIN)
 	DP @ - ,	\ and compile it after BRANCH
 	DUP
 	DP @ SWAP -	\ calculate the offset2
