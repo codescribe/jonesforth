@@ -422,6 +422,7 @@
 : DEPTH		( -- n )
 	S0 @ DSP@ -
 	4-			( adjust because S0 was on the stack when we pushed DSP )
+	4 /			( A cell has four bytes )
 ;
 
 (
