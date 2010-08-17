@@ -325,14 +325,15 @@
 )
 : .S		( -- )
 	DSP@		( get current stack pointer )
+	0 S0 @ + 4-	( pointer to the stack element )
 	BEGIN
-		DUP S0 @ <
+		OVER OVER <=	( compare to current stack pointer )
 	WHILE
 		DUP @ U.	( print the stack element )
 		SPACE
-		4+		( move up )
+		4-		( move down )
 	REPEAT
-	DROP
+	DROP DROP
 ;
 
 ( This word returns the width (in characters) of an unsigned number in the current base )
