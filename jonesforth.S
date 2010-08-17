@@ -1130,13 +1130,13 @@ var_\name :
 
 	STATE		Is the interpreter executing code (0) or compiling a word (non-zero)?
 	LATEST		Points to the latest (most recently defined) word in the dictionary.
-	HERE		Points to the next free byte of memory.  When compiling, compiled words go here.
+	DP		Points to the next free byte of memory.  When compiling, compiled words go here.
 	S0		Stores the address of the top of the parameter stack.
 	BASE		The current base for printing and reading numbers.
 
 */
 	defvar "STATE",5,,STATE
-	defvar "HERE",4,,HERE
+	defvar "DP",2,,DP
 	defvar "LATEST",6,,LATEST,name_SYSCALL0 // SYSCALL0 must be last in built-in dictionary
 	defvar "S0",2,,SZ
 	defvar "BASE",4,,BASE,10
@@ -1667,7 +1667,7 @@ _TCFA:
 	immediate mode.
 
 	The interesting stuff happens when STATE is non-zero -- compiling mode.  In this mode the
-	interpreter appends the codeword pointer to user memory (the HERE variable points to the next
+	interpreter appends the codeword pointer to user memory (the DP variable points to the next
 	free byte of user memory -- see DATA SEGMENT section below).
 
 	So you may be able to see how we could define : (COLON).  The general plan is:
@@ -1676,7 +1676,7 @@ _TCFA:
 
 	(2) Construct the dictionary entry -- just the header part -- in user memory:
 
-    pointer to previous word (from LATEST)			+-- Afterwards, HERE points here, where
+    pointer to previous word (from LATEST)			+-- Afterwards, DP points here, where
 	   ^							|   the interpreter will start appending
 	   |							V   codewords.
 	+--|------+---+---+---+---+---+---+---+---+------------+
@@ -1686,7 +1686,7 @@ _TCFA:
 
 	(3) Set LATEST to point to the newly defined word, ...
 
-	(4) .. and most importantly leave HERE pointing just after the new codeword.  This is where
+	(4) .. and most importantly leave DP pointing just after the new codeword.  This is where
 	    the interpreter will append codewords.
 
 	(5) Set STATE to 1.  This goes into compile mode so the interpreter starts appending codewords to
@@ -1702,7 +1702,7 @@ _TCFA:
 	so the interpreter (now it's in compile mode, so I guess it's really the compiler) reads "DUP",
 	looks it up in the dictionary, gets its codeword pointer, and appends it:
 
-									     +-- HERE updated to point here.
+									     +-- DP updated to point here.
 									     |
 									     V
 	+---------+---+---+---+---+---+---+---+---+------------+------------+
@@ -1712,7 +1712,7 @@ _TCFA:
 
 	Next we read +, get the codeword pointer, and append it:
 
-											  +-- HERE updated to point here.
+											  +-- DP updated to point here.
 											  |
 											  V
 	+---------+---+---+---+---+---+---+---+---+------------+------------+------------+
@@ -1741,7 +1741,7 @@ _TCFA:
 	+---------+---+---+---+---+---+---+---+---+------------+------------+------------+------------+
                    len                         pad  codeword					       ^
 												       |
-												      HERE
+												      DP
 	STATE is set to 0.
 
 	And that's it, job done, our new definition is compiled, and we're back in immediate mode
@@ -1758,7 +1758,7 @@ _TCFA:
 	going to define them.  The : (COLON) function can be made a little bit more general by writing
 	it in two parts.  The first part, called CREATE, makes just the header:
 
-						   +-- Afterwards, HERE points here.
+						   +-- Afterwards, DP points here.
 						   |
 						   V
 	+---------+---+---+---+---+---+---+---+---+
@@ -1769,7 +1769,7 @@ _TCFA:
 	and the second part, the actual definition of : (COLON), calls CREATE and appends the
 	DOCOL codeword, so leaving:
 
-								+-- Afterwards, HERE points here.
+								+-- Afterwards, DP points here.
 								|
 								V
 	+---------+---+---+---+---+---+---+---+---+------------+
@@ -1789,7 +1789,7 @@ _TCFA:
 	pop %ebx		// %ebx = address of name
 
 	// Link pointer.
-	movl var_HERE,%edi	// %edi is the address of the header
+	movl var_DP,%edi	// %edi is the address of the header
 	movl var_LATEST,%eax	// Get link pointer
 	stosl			// and store it in the header.
 
@@ -1803,10 +1803,10 @@ _TCFA:
 	addl $3,%edi		// Align to next 4 byte boundary.
 	andl $~3,%edi
 
-	// Update LATEST and HERE.
-	movl var_HERE,%eax
+	// Update LATEST and DP.
+	movl var_DP,%eax
 	movl %eax,var_LATEST
-	movl %edi,var_HERE
+	movl %edi,var_DP
 	NEXT
 
 /*
@@ -1814,9 +1814,9 @@ _TCFA:
 	to use.
 
 	The first is , (COMMA) which is a standard FORTH word which appends a 32 bit integer to the user
-	memory pointed to by HERE, and adds 4 to HERE.  So the action of , (COMMA) is:
+	memory pointed to by DP, and adds 4 to DP.  So the action of , (COMMA) is:
 
-							previous value of HERE
+							previous value of DP
 								 |
 								 V
 	+---------+---+---+---+---+---+---+---+---+-- - - - - --+------------+
@@ -1824,7 +1824,7 @@ _TCFA:
 	+---------+---+---+---+---+---+---+---+---+-- - - - - --+------------+
                    len                         pad		              ^
 									      |
-									new value of HERE
+									new value of DP
 
 	and <data> is whatever 32 bit integer was at the top of the stack.
 
@@ -1837,9 +1837,9 @@ _TCFA:
 	call _COMMA
 	NEXT
 _COMMA:
-	movl var_HERE,%edi	// HERE
+	movl var_DP,%edi	// DP
 	stosl			// Store it.
-	movl %edi,var_HERE	// Update HERE (incremented)
+	movl %edi,var_DP	// Update DP (incremented)
 	ret
 
 /*
@@ -2278,9 +2278,9 @@ set_up_data_segment:
 	xor %ebx,%ebx		// Call brk(0)
 	movl $__NR_brk,%eax
 	int $0x80
-	movl %eax,var_HERE	// Initialise HERE to point at beginning of data segment.
+	movl %eax,var_DP	// Initialise DP to point at beginning of data segment.
 	addl $INITIAL_DATA_SEGMENT_SIZE,%eax	// Reserve nn bytes of memory for initial data segment.
-	movl %eax,%ebx		// Call brk(HERE+INITIAL_DATA_SEGMENT_SIZE)
+	movl %eax,%ebx		// Call brk(DP+INITIAL_DATA_SEGMENT_SIZE)
 	movl $__NR_brk,%eax
 	int $0x80
 	ret

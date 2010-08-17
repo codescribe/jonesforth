@@ -137,23 +137,23 @@
 \ off the stack, calculate the offset, and back-fill the offset.
 : IF IMMEDIATE
 	' 0BRANCH ,	\ compile 0BRANCH
-	HERE @		\ save location of the offset on the stack
+	DP @		\ save location of the offset on the stack
 	0 ,		\ compile a dummy offset
 ;
 
 : THEN IMMEDIATE
 	DUP
-	HERE @ SWAP -	\ calculate the offset from the address saved on the stack
+	DP @ SWAP -	\ calculate the offset from the address saved on the stack
 	SWAP !		\ store the offset in the back-filled location
 ;
 
 : ELSE IMMEDIATE
 	' BRANCH ,	\ definite branch to just over the false-part
-	HERE @		\ save location of the offset on the stack
+	DP @		\ save location of the offset on the stack
 	0 ,		\ compile a dummy offset
 	SWAP		\ now back-fill the original (IF) offset
 	DUP		\ same as for THEN word above
-	HERE @ SWAP -
+	DP @ SWAP -
 	SWAP !
 ;
 
@@ -162,12 +162,12 @@
 \	where OFFSET points back to the loop-part
 \ This is like do { loop-part } while (condition) in the C language
 : BEGIN IMMEDIATE
-	HERE @		\ save location on the stack
+	DP @		\ save location on the stack
 ;
 
 : UNTIL IMMEDIATE
 	' 0BRANCH ,	\ compile 0BRANCH
-	HERE @ -	\ calculate the offset from the address saved on the stack
+	DP @ -	\ calculate the offset from the address saved on the stack
 	,		\ compile the offset here
 ;
 
@@ -177,7 +177,7 @@
 \ In other words, an infinite loop which can only be returned from with EXIT
 : AGAIN IMMEDIATE
 	' BRANCH ,	\ compile BRANCH
-	HERE @ -	\ calculate the offset back
+	DP @ -	\ calculate the offset back
 	,		\ compile the offset here
 ;
 
@@ -187,16 +187,16 @@
 \ So this is like a while (condition) { loop-part } loop in the C language
 : WHILE IMMEDIATE
 	' 0BRANCH ,	\ compile 0BRANCH
-	HERE @		\ save location of the offset2 on the stack
+	DP @		\ save location of the offset2 on the stack
 	0 ,		\ compile a dummy offset2
 ;
 
 : REPEAT IMMEDIATE
 	' BRANCH ,	\ compile BRANCH
 	SWAP		\ get the original offset (from BEGIN)
-	HERE @ - ,	\ and compile it after BRANCH
+	DP @ - ,	\ and compile it after BRANCH
 	DUP
-	HERE @ SWAP -	\ calculate the offset2
+	DP @ SWAP -	\ calculate the offset2
 	SWAP !		\ and back-fill it in the original location
 ;
 
@@ -433,9 +433,9 @@
 ;
 
 (
-	ALIGN aligns the HERE pointer, so the next word appended will be aligned properly.
+	ALIGN aligns the DP pointer, so the next word appended will be aligned properly.
 )
-: ALIGN HERE @ ALIGNED HERE ! ;
+: ALIGN DP @ ALIGNED DP ! ;
 
 (
 	STRINGS ----------------------------------------------------------------------
@@ -454,19 +454,19 @@
 	word is executed.
 
 	In immediate mode there isn't a particularly good place to put the string, but in this
-	case we put the string at HERE (but we _don't_ change HERE).  This is meant as a temporary
+	case we put the string at DP (but we _don't_ change DP).  This is meant as a temporary
 	location, likely to be overwritten soon after.
 )
 ( C, appends a byte to the current compiled word. )
 : C,
-	HERE @ C!	( store the character in the compiled image )
-	1 HERE +!	( increment HERE pointer by 1 byte )
+	DP @ C!	( store the character in the compiled image )
+	1 DP +!	( increment DP pointer by 1 byte )
 ;
 
 : S" IMMEDIATE		( -- addr len )
 	STATE @ IF	( compiling? )
 		' LITSTRING ,	( compile LITSTRING )
-		HERE @		( save the address of the length word on the stack )
+		DP @		( save the address of the length word on the stack )
 		0 ,		( dummy length - we don't know what it is yet )
 		BEGIN
 			KEY 		( get next character of the string )
@@ -476,12 +476,12 @@
 		REPEAT
 		DROP		( drop the double quote character at the end )
 		DUP		( get the saved address of the length word )
-		HERE @ SWAP -	( calculate the length )
+		DP @ SWAP -	( calculate the length )
 		4-		( subtract 4 (because we measured from the start of the length word) )
 		SWAP !		( and back-fill the length location )
 		ALIGN		( round up to next multiple of 4 bytes for the remaining code )
 	ELSE		( immediate mode )
-		HERE @		( get the start address of the temporary space )
+		DP @		( get the start address of the temporary space )
 		BEGIN
 			KEY
 			DUP '"' <>
@@ -490,8 +490,8 @@
 			1+		( increment address )
 		REPEAT
 		DROP		( drop the final " character )
-		HERE @ -	( calculate the length )
-		HERE @		( push the start address )
+		DP @ -	( calculate the length )
+		DP @		( push the start address )
 		SWAP 		( addr len )
 	THEN
 ;
@@ -563,7 +563,7 @@
 	A call to WORD [TEN] CREATE (where [TEN] means that "TEN" is the next word in the input)
 	leaves the dictionary entry:
 
-				   +--- HERE
+				   +--- DP
 				   |
 				   V
 	+---------+---+---+---+---+
@@ -597,7 +597,7 @@
 
 (
 	VARIABLE is a little bit harder because we need somewhere to put the variable.  There is
-	nothing particularly special about the user memory (the area of memory pointed to by HERE
+	nothing particularly special about the user memory (the area of memory pointed to by DP
 	where we have previously just stored new word definitions).  We can slice off bits of this
 	memory area to store anything we want, so one possible definition of VARIABLE might create
 	this:
@@ -617,11 +617,11 @@
 
 	First ALLOT, where n ALLOT allocates n bytes of memory.  (Note when calling this that
 	it's a very good idea to make sure that n is a multiple of 4, or at least that next time
-	a word is compiled that HERE has been left as a multiple of 4).
+	a word is compiled that DP has been left as a multiple of 4).
 )
 : ALLOT		( n -- addr )
-	HERE @ SWAP	( here n )
-	HERE +!		( adds n to HERE, after this the old value of HERE is still on the stack )
+	DP @ SWAP	( here n )
+	DP +!		( adds n to DP, after this the old value of DP is still on the stack )
 ;
 
 (
@@ -801,7 +801,7 @@
 	after it, including any variables and other memory allocated after.
 
 	The implementation is very simple - we look up the word (which returns the dictionary entry
-	address).  Then we set HERE to point to that address, so in effect all future allocations
+	address).  Then we set DP to point to that address, so in effect all future allocations
 	and definitions will overwrite memory starting at the word.  We also need to set LATEST to
 	point to the previous word.
 
@@ -814,7 +814,7 @@
 : FORGET
 	WORD FIND	( find the word, gets the dictionary entry address )
 	DUP @ LATEST !	( set LATEST to point to the previous word )
-	HERE !		( and store HERE with the dictionary address )
+	DP !		( and store DP with the dictionary address )
 ;
 
 (
@@ -1025,7 +1025,7 @@
 
 	( Now we search again, looking for the next word in the dictionary.  This gives us
 	  the length of the word that we will be decompiling.  (Well, mostly it does). )
-	HERE @		( address of the end of the last compiled word )
+	DP @		( address of the end of the last compiled word )
 	LATEST @	( word last curr )
 	BEGIN
 		2 PICK		( word last curr word )
@@ -1181,7 +1181,7 @@
 
 : :NONAME
 	0 0 CREATE	( create a word with no name - we need a dictionary header because ; expects it )
-	HERE @		( current HERE value is the address of the codeword, ie. the xt )
+	DP @		( current DP value is the address of the codeword, ie. the xt )
 	DOCOL ,		( compile DOCOL (the codeword) )
 	]		( go into compile mode )
 ;
@@ -1399,26 +1399,26 @@
 : Z" IMMEDIATE
 	STATE @ IF	( compiling? )
 		' LITSTRING ,	( compile LITSTRING )
-		HERE @		( save the address of the length word on the stack )
+		DP @		( save the address of the length word on the stack )
 		0 ,		( dummy length - we don't know what it is yet )
 		BEGIN
 			KEY 		( get next character of the string )
 			DUP '"' <>
 		WHILE
-			HERE @ C!	( store the character in the compiled image )
-			1 HERE +!	( increment HERE pointer by 1 byte )
+			DP @ C!	( store the character in the compiled image )
+			1 DP +!	( increment DP pointer by 1 byte )
 		REPEAT
-		0 HERE @ C!	( add the ASCII NUL byte )
-		1 HERE +!
+		0 DP @ C!	( add the ASCII NUL byte )
+		1 DP +!
 		DROP		( drop the double quote character at the end )
 		DUP		( get the saved address of the length word )
-		HERE @ SWAP -	( calculate the length )
+		DP @ SWAP -	( calculate the length )
 		4-		( subtract 4 (because we measured from the start of the length word) )
 		SWAP !		( and back-fill the length location )
 		ALIGN		( round up to next multiple of 4 bytes for the remaining code )
 		' DROP ,	( compile DROP (to drop the length) )
 	ELSE		( immediate mode )
-		HERE @		( get the start address of the temporary space )
+		DP @		( get the start address of the temporary space )
 		BEGIN
 			KEY
 			DUP '"' <>
@@ -1428,7 +1428,7 @@
 		REPEAT
 		DROP		( drop the final " character )
 		0 SWAP C!	( store final ASCII NUL )
-		HERE @		( push the start address )
+		DP @		( push the start address )
 	THEN
 ;
 
@@ -1445,13 +1445,13 @@
 
 : CSTRING	( addr len -- c-addr )
 	SWAP OVER	( len saddr len )
-	HERE @ SWAP	( len saddr daddr len )
+	DP @ SWAP	( len saddr daddr len )
 	CMOVE		( len )
 
-	HERE @ +	( daddr+len )
+	DP @ +	( daddr+len )
 	0 SWAP C!	( store terminating NUL char )
 
-	HERE @ 		( push start address )
+	DP @ 		( push start address )
 ;
 
 (
@@ -1522,7 +1522,7 @@
 	UNUSED returns the number of cells remaining in the user memory (data segment).
 
 	For our implementation we will use Linux brk(2) system call to find out the end
-	of the data segment and subtract HERE from it.
+	of the data segment and subtract DP from it.
 )
 : GET-BRK	( -- brkpoint )
 	0 SYS_BRK SYSCALL1	( call brk(0) )
@@ -1530,7 +1530,7 @@
 
 : UNUSED	( -- n )
 	GET-BRK		( get end of data segment according to the kernel )
-	HERE @		( get current position in data segment )
+	DP @		( get current position in data segment )
 	-
 	4 /		( returns number of cells )
 ;
