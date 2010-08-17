@@ -794,9 +794,9 @@ code_\label :			// assembler code follows
 	NEXT
 
 /*
-	In this FORTH, only /MOD is primitive.  Later we will define the / and MOD words in
-	terms of the primitive /MOD.  The design of the i386 assembly instruction idiv which
-	leaves both quotient and remainder makes this the obvious choice.
+	In this FORTH, only /MOD and U/MOD is primitive.  Later we will define the /, MOD and other words in
+	terms of the primitives /MOD and U/MOD.  The design of the i386 assembly instructions idiv and div which
+	leave both quotient and remainder makes this the obvious choice.
 */
 
 	defcode "/MOD",4,,DIVMOD
@@ -806,6 +806,15 @@ code_\label :			// assembler code follows
 	idivl %ebx
 	push %edx		// push remainder
 	push %eax		// push quotient
+	NEXT
+
+	defcode "U/MOD",5,,UDIVMOD
+	xor %edx, %edx
+	pop %ebx
+	pop %eax
+	divl %ebx
+	push %edx	// push remainder
+	push %eax	// push quotient
 	NEXT
 
 /*

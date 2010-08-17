@@ -303,7 +303,7 @@
 
 ( This is the underlying recursive definition of U. )
 : U.		( u -- )
-	BASE @ /MOD	( width rem quot )
+	BASE @ U/MOD	( width rem quot )
 	?DUP IF			( if quotient <> 0 then )
 		RECURSE		( print the quotient )
 	THEN
