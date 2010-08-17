@@ -8,7 +8,7 @@ Core words with bugs ()
 Non standard core words
 	DEPTH	fixed in jonesforth.fs using bb4wforth's fix
 	.S	fixed in jonesforth.fs
-	HERE	not yet implemented. jonesforth's HERE is renamed to DP. 
+	HERE	implemented. jonesforth's HERE is renamed to DP. 
 	ALLOT	fixed in jonesforth.fs.
 	CREATE	renamed jonesforth's version to HEADER,
 		ANS version of CREATE implemented using bb4wforth's fix
