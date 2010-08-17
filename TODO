@@ -1,0 +1,39 @@
+Acoording to ANSForth and bb4wforth, jonesforth 47 is not
+in compliance with ANS Forth.
+
+Core words with bugs ()
+	/MOD	fixed in jonesforth.S using bb4wforth's fix
+	U.	fixed in jonesforth using bb4wforth's fix
+
+Non standard core words
+	DEPTH	fixed in jonesforth.fs using bb4wforth's fix
+	.S	fixed in jonesforth.fs
+	HERE	not yet implemented. jonesforth's HERE is renamed to DP. 
+	ALLOT	fixed in jonesforth.fs.
+	CREATE	renamed jonesforth's version to HEADER,
+		ANS version of CREATE implemented using bb4wforth's fix
+	VARIABLE	fixed in jonesforth.fs
+	TRUE
+	FIND
+	WHILE	fixed using bb4wforth's fix.
+	REPEAT	fixed using bb4wforth's fix.
+	WORD
+	KEY
+	[']	doesn't work on immediate word.
+	'	fixed.
+	IMMEDIATE
+
+Core Words not yet implemented
+	DOES>	implemented using bb4wforth's version.
+
+	# #> #S */ */MOD +LOOP 2! 2* 2/ 2@ 2OVER <# >BODY >IN >NUMBER
+	ABORT" ABS ACCEPT CELL+ CHAR+ CHARS COUNT DO ENVIRONMENT?
+	EVALUATE FILL FM/MOD HOLD I J LEAVE LOOP LSHIFT M* MAX MIN
+	MOVE POSTPONE R@ RSHIFT S>D SIGN SM/REM SOURCE U< UM* UM/MOD
+	UNLOOP [CHAR] 
+
+Core extension words not yet implemented
+	#TIB .( 2>R 2R> 2R@ ?DO C" COMPILE, CONVERT ERASE EXPECT MARKER
+	PAD PARSE QUERY REFILL RESTORE-INPUT ROLL SAVE-INPUT SOURCE-ID
+	SPAN TIB U> 
+
