@@ -1756,7 +1756,7 @@ _TCFA:
 
 	The above explains how compiling, : (COLON) and ; (SEMICOLON) works and in a moment I'm
 	going to define them.  The : (COLON) function can be made a little bit more general by writing
-	it in two parts.  The first part, called CREATE, makes just the header:
+	it in two parts.  The first part, called HEADER, (HEADER_COMMA), makes just the header:
 
 						   +-- Afterwards, DP points here.
 						   |
@@ -1766,7 +1766,7 @@ _TCFA:
 	+---------+---+---+---+---+---+---+---+---+
                    len                         pad
 
-	and the second part, the actual definition of : (COLON), calls CREATE and appends the
+	and the second part, the actual definition of : (COLON), calls HEADER, (HEADER_COMMA) and appends the
 	DOCOL codeword, so leaving:
 
 								+-- Afterwards, DP points here.
@@ -1777,12 +1777,12 @@ _TCFA:
 	+---------+---+---+---+---+---+---+---+---+------------+
                    len                         pad  codeword
 
-	CREATE is a standard FORTH word and the advantage of this split is that we can reuse it to
+	HEADER, (HEADER_COMMA) is a FORTH word and the advantage of this split is that we can reuse it to
 	create other types of words (not just ones which contain code, but words which contain variables,
 	constants and other data).
 */
 
-	defcode "CREATE",6,,CREATE
+	defcode "HEADER,",7,,HEADER_COMMA
 
 	// Get the name length and address.
 	pop %ecx		// %ecx = length
@@ -1800,7 +1800,7 @@ _TCFA:
 	mov %ebx,%esi		// %esi = word
 	rep movsb		// Copy the word
 	pop %esi
-	addl $3,%edi		// Align to next 4 byte boundary.
+	lea 3(%edi),%edi		// Align to next 4 byte boundary.
 	andl $~3,%edi
 
 	// Update LATEST and DP.
@@ -1871,13 +1871,13 @@ _COMMA:
 	NEXT
 
 /*
-	Now we can define : (COLON) using CREATE.  It just calls CREATE, appends DOCOL (the codeword), sets
-	the word HIDDEN and goes into compile mode.
+	Now we can define : (COLON) using HEADER, (HEADER_COMMA).  It just calls HEADER, (HEADER_COMMA),
+	appends DOCOL (the codeword), sets the word HIDDEN and goes into compile mode.
 */
 
 	defword ":",1,,COLON
 	.int WORD		// Get the name of the new word
-	.int CREATE		// CREATE the dictionary entry / header
+	.int HEADER_COMMA	// Create the dictionary entry / header
 	.int LIT, DOCOL, COMMA	// Append DOCOL  (the codeword).
 	.int LATEST, FETCH, HIDDEN // Make the word hidden (see below for definition).
 	.int RBRAC		// Go into compile mode.

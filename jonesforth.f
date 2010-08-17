@@ -560,9 +560,9 @@
 
 	The trick is to define a new word for the variable itself (eg. if the variable was called
 	'VAR' then we would define a new word called VAR).  This is easy to do because we exposed
-	dictionary entry creation through the CREATE word (part of the definition of : above).
-	A call to WORD [TEN] CREATE (where [TEN] means that "TEN" is the next word in the input)
-	leaves the dictionary entry:
+	dictionary entry creation through the HEADER, (HEADER_COMMA) word (part of the definition
+	of : above). A call to WORD [TEN] HEADER, (where [TEN] means that "TEN" is the next word
+	in the input) leaves the dictionary entry:
 
 				   +--- DP
 				   |
@@ -589,7 +589,7 @@
 )
 : CONSTANT
 	WORD		( get the name (the name follows CONSTANT) )
-	CREATE		( make the dictionary entry )
+	HEADER,		( make the dictionary entry )
 	DOCOL ,		( append DOCOL (the codeword field of this word) )
 	['] LIT ,		( append the codeword LIT )
 	,		( append the value on the top of the stack )
@@ -638,7 +638,7 @@
 : VARIABLE
 	DP @		( push the pointer to variable's memory )
 	1 CELLS ALLOT	( allocate 1 cell of memory )
-	WORD CREATE	( make the dictionary entry (the name follows VARIABLE) )
+	WORD HEADER,	( make the dictionary entry (the name follows VARIABLE) )
 	DOCOL ,		( append DOCOL (the codeword field of this word) )
 	['] LIT ,		( append the codeword LIT )
 	,		( append the pointer to the new memory )
@@ -697,7 +697,7 @@
 	way cannot be inlined).
 )
 : VALUE		( n -- )
-	WORD CREATE	( make the dictionary entry (the name follows VALUE) )
+	WORD HEADER,	( make the dictionary entry (the name follows VALUE) )
 	DOCOL ,		( append DOCOL )
 	['] LIT ,		( append the codeword LIT )
 	,		( append the initial value )
@@ -1185,7 +1185,7 @@
 )
 
 : :NONAME
-	0 0 CREATE	( create a word with no name - we need a dictionary header because ; expects it )
+	0 0 HEADER,	( create a word with no name - we need a dictionary header because ; expects it )
 	DP @		( current DP value is the address of the codeword, ie. the xt )
 	DOCOL ,		( compile DOCOL (the codeword) )
 	]		( go into compile mode )
@@ -1548,9 +1548,9 @@
 	(4096 bytes or 1024 cells).
 
 	This FORTH doesn't automatically increase the size of the data segment "on demand"
-	(ie. when , (COMMA), ALLOT, CREATE, and so on are used).  Instead the programmer
-	needs to be aware of how much space a large allocation will take, check UNUSED, and
-	call MORECORE if necessary.  A simple programming exercise is to change the
+	(ie. when , (COMMA), ALLOT, HEADER, (HEADER_COMMA), and so on are used).  Instead the
+	programmer needs to be aware of how much space a large allocation will take, check
+	UNUSED, and call MORECORE if necessary.  A simple programming exercise is to change the
 	implementation of the data segment so that MORECORE is called automatically if
 	the program needs more memory.
 )
