@@ -70,7 +70,7 @@
 
 \ LITERAL takes whatever is on the stack and compiles LIT <foo>
 : LITERAL IMMEDIATE
-	' LIT ,		\ compile LIT
+	['] LIT ,		\ compile LIT
 	,		\ compile the literal itself (from the stack)
 	;
 
@@ -136,7 +136,7 @@
 \ the address of the 0BRANCH on the stack.  Later when we see THEN, we pop that address
 \ off the stack, calculate the offset, and back-fill the offset.
 : IF IMMEDIATE
-	' 0BRANCH ,	\ compile 0BRANCH
+	['] 0BRANCH ,	\ compile 0BRANCH
 	DP @		\ save location of the offset on the stack
 	0 ,		\ compile a dummy offset
 ;
@@ -148,7 +148,7 @@
 ;
 
 : ELSE IMMEDIATE
-	' BRANCH ,	\ definite branch to just over the false-part
+	['] BRANCH ,	\ definite branch to just over the false-part
 	DP @		\ save location of the offset on the stack
 	0 ,		\ compile a dummy offset
 	SWAP		\ now back-fill the original (IF) offset
@@ -166,7 +166,7 @@
 ;
 
 : UNTIL IMMEDIATE
-	' 0BRANCH ,	\ compile 0BRANCH
+	['] 0BRANCH ,	\ compile 0BRANCH
 	DP @ -	\ calculate the offset from the address saved on the stack
 	,		\ compile the offset here
 ;
@@ -176,7 +176,7 @@
 \	where OFFSET points back to the loop-part
 \ In other words, an infinite loop which can only be returned from with EXIT
 : AGAIN IMMEDIATE
-	' BRANCH ,	\ compile BRANCH
+	['] BRANCH ,	\ compile BRANCH
 	DP @ -	\ calculate the offset back
 	,		\ compile the offset here
 ;
@@ -186,13 +186,13 @@
 \	where OFFSET points back to condition (the beginning) and OFFSET2 points to after the whole piece of code
 \ So this is like a while (condition) { loop-part } loop in the C language
 : WHILE IMMEDIATE
-	' 0BRANCH ,	\ compile 0BRANCH
+	['] 0BRANCH ,	\ compile 0BRANCH
 	DP @		\ save location of the offset2 on the stack
 	0 ,		\ compile a dummy offset2
 ;
 
 : REPEAT IMMEDIATE
-	' BRANCH ,	\ compile BRANCH
+	['] BRANCH ,	\ compile BRANCH
 	SWAP		\ get the original offset (from BEGIN)
 	DP @ - ,	\ and compile it after BRANCH
 	DUP
@@ -209,7 +209,7 @@
 \ implement them all in terms of the primitives 0BRANCH and BRANCH, but instead reusing simpler
 \ control words like (in this instance) IF.
 : UNLESS IMMEDIATE
-	' NOT ,		\ compile NOT (to reverse the test)
+	['] NOT ,		\ compile NOT (to reverse the test)
 	[COMPILE] IF	\ continue by calling the normal IF
 ;
 
@@ -466,7 +466,7 @@
 
 : S" IMMEDIATE		( -- addr len )
 	STATE @ IF	( compiling? )
-		' LITSTRING ,	( compile LITSTRING )
+		['] LITSTRING ,	( compile LITSTRING )
 		DP @		( save the address of the length word on the stack )
 		0 ,		( dummy length - we don't know what it is yet )
 		BEGIN
@@ -516,7 +516,7 @@
 : ." IMMEDIATE		( -- )
 	STATE @ IF	( compiling? )
 		[COMPILE] S"	( read the string, and compile LITSTRING, etc. )
-		' TELL ,	( compile the final TELL )
+		['] TELL ,	( compile the final TELL )
 	ELSE
 		( In immediate mode, just read characters and print them until we get
 		  to the ending double quote. )
@@ -591,9 +591,9 @@
 	WORD		( get the name (the name follows CONSTANT) )
 	CREATE		( make the dictionary entry )
 	DOCOL ,		( append DOCOL (the codeword field of this word) )
-	' LIT ,		( append the codeword LIT )
+	['] LIT ,		( append the codeword LIT )
 	,		( append the value on the top of the stack )
-	' EXIT ,	( append the codeword EXIT )
+	['] EXIT ,	( append the codeword EXIT )
 ;
 
 (
@@ -640,9 +640,9 @@
 	1 CELLS ALLOT	( allocate 1 cell of memory )
 	WORD CREATE	( make the dictionary entry (the name follows VARIABLE) )
 	DOCOL ,		( append DOCOL (the codeword field of this word) )
-	' LIT ,		( append the codeword LIT )
+	['] LIT ,		( append the codeword LIT )
 	,		( append the pointer to the new memory )
-	' EXIT ,	( append the codeword EXIT )
+	['] EXIT ,	( append the codeword EXIT )
 ;
 
 (
@@ -699,9 +699,9 @@
 : VALUE		( n -- )
 	WORD CREATE	( make the dictionary entry (the name follows VALUE) )
 	DOCOL ,		( append DOCOL )
-	' LIT ,		( append the codeword LIT )
+	['] LIT ,		( append the codeword LIT )
 	,		( append the initial value )
-	' EXIT ,	( append the codeword EXIT )
+	['] EXIT ,	( append the codeword EXIT )
 ;
 
 : TO IMMEDIATE	( n -- )
@@ -710,9 +710,9 @@
 	>DFA		( get a pointer to the first data field (the 'LIT') )
 	4+		( increment to point at the value )
 	STATE @ IF	( compiling? )
-		' LIT ,		( compile LIT )
+		['] LIT ,		( compile LIT )
 		,		( compile the address of the value )
-		' ! ,		( compile ! )
+		['] ! ,		( compile ! )
 	ELSE		( immediate mode )
 		!		( update it straightaway )
 	THEN
@@ -725,9 +725,9 @@
 	>DFA		( get a pointer to the first data field (the 'LIT') )
 	4+		( increment to point at the value )
 	STATE @ IF	( compiling? )
-		' LIT ,		( compile LIT )
+		['] LIT ,		( compile LIT )
 		,		( compile the address of the value )
-		' +! ,		( compile +! )
+		['] +! ,		( compile +! )
 	ELSE		( immediate mode )
 		+!		( update it straightaway )
 	THEN
@@ -953,10 +953,10 @@
 ;
 
 : OF IMMEDIATE
-	' OVER ,	( compile OVER )
-	' = ,		( compile = )
+	['] OVER ,	( compile OVER )
+	['] = ,		( compile = )
 	[COMPILE] IF	( compile IF )
-	' DROP ,  	( compile DROP )
+	['] DROP ,  	( compile DROP )
 ;
 
 : ENDOF IMMEDIATE
@@ -964,7 +964,7 @@
 ;
 
 : ENDCASE IMMEDIATE
-	' DROP ,	( compile DROP )
+	['] DROP ,	( compile DROP )
 
 	( keep compiling THEN until we get to our zero marker )
 	BEGIN
@@ -1053,11 +1053,11 @@
 		DUP @		( end start codeword )
 
 		CASE
-		' LIT OF		( is it LIT ? )
+		['] LIT OF		( is it LIT ? )
 			4 + DUP @		( get next word which is the integer constant )
 			.			( and print it )
 		ENDOF
-		' LITSTRING OF		( is it LITSTRING ? )
+		['] LITSTRING OF		( is it LITSTRING ? )
 			[ CHAR S ] LITERAL EMIT '"' EMIT SPACE ( print S"<space> )
 			4 + DUP @		( get the length word )
 			SWAP 4 + SWAP		( end start+4 length )
@@ -1066,25 +1066,25 @@
 			+ ALIGNED		( end start+4+len, aligned )
 			4 -			( because we're about to add 4 below )
 		ENDOF
-		' 0BRANCH OF		( is it 0BRANCH ? )
+		['] 0BRANCH OF		( is it 0BRANCH ? )
 			." 0BRANCH ( "
 			4 + DUP @		( print the offset )
 			.
 			." ) "
 		ENDOF
-		' BRANCH OF		( is it BRANCH ? )
+		['] BRANCH OF		( is it BRANCH ? )
 			." BRANCH ( "
 			4 + DUP @		( print the offset )
 			.
 			." ) "
 		ENDOF
-		' ' OF			( is it ' (TICK) ? )
-			[ CHAR ' ] LITERAL EMIT SPACE
+		['] ['] OF			( is it ['] (BRACKET_TICK) ? )
+			." ['] "
 			4 + DUP @		( get the next codeword )
 			CFA>			( and force it to be printed as a dictionary entry )
 			ID. SPACE
 		ENDOF
-		' EXIT OF		( is it EXIT? )
+		['] EXIT OF		( is it EXIT? )
 			( We expect the last word to be EXIT, and if it is then we don't print it
 			  because EXIT is normally implied by ;.  EXIT can also appear in the middle
 			  of words, and then it needs to be printed. )
@@ -1136,8 +1136,12 @@
 
 		['] FOO
 
+	As stated before the version of ['] defined until now only works in compiling mode.
+	It also fails when the word after it is not an immediate word. We also offer a new
+	word ' (TICK) which works in immediate mode.
 	(Exercises for readers: (1) What is the difference between ['] FOO and ' FOO?
-	(2) What is the relationship between ', ['] and LIT?)
+	(2) What is the relationship between ', ['] and LIT? (3) How can a ['] working on
+	immediate word be defined?)
 
 	More useful is to define anonymous words and/or to assign xt's to variables.
 
@@ -1187,8 +1191,8 @@
 	]		( go into compile mode )
 ;
 
-: ['] IMMEDIATE
-	' LIT ,		( compile LIT )
+: '	( "<spaces>name" -- xt )
+	WORD FIND >CFA
 ;
 
 (
@@ -1289,7 +1293,7 @@
 
 : CATCH		( xt -- exn? )
 	DSP@ 4+ >R		( save parameter stack pointer (+4 because of xt) on the return stack )
-	' EXCEPTION-MARKER 4+	( push the address of the RDROP inside EXCEPTION-MARKER ... )
+	['] EXCEPTION-MARKER 4+	( push the address of the RDROP inside EXCEPTION-MARKER ... )
 	>R			( ... on to the return stack so it acts like a return address )
 	EXECUTE			( execute the nested function )
 ;
@@ -1301,7 +1305,7 @@
 			DUP R0 4- <		( RSP < R0 )
 		WHILE
 			DUP @			( get the return stack entry )
-			' EXCEPTION-MARKER 4+ = IF	( found the EXCEPTION-MARKER on the return stack )
+			['] EXCEPTION-MARKER 4+ = IF	( found the EXCEPTION-MARKER on the return stack )
 				4+			( skip the EXCEPTION-MARKER on the return stack )
 				RSP!			( restore the return stack pointer )
 
@@ -1344,7 +1348,7 @@
 	WHILE
 		DUP @			( get the return stack entry )
 		CASE
-		' EXCEPTION-MARKER 4+ OF	( is it the exception stack frame? )
+		['] EXCEPTION-MARKER 4+ OF	( is it the exception stack frame? )
 			." CATCH ( DSP="
 			4+ DUP @ U.		( print saved stack pointer )
 			." ) "
@@ -1399,7 +1403,7 @@
 )
 : Z" IMMEDIATE
 	STATE @ IF	( compiling? )
-		' LITSTRING ,	( compile LITSTRING )
+		['] LITSTRING ,	( compile LITSTRING )
 		DP @		( save the address of the length word on the stack )
 		0 ,		( dummy length - we don't know what it is yet )
 		BEGIN
@@ -1417,7 +1421,7 @@
 		4-		( subtract 4 (because we measured from the start of the length word) )
 		SWAP !		( and back-fill the length location )
 		ALIGN		( round up to next multiple of 4 bytes for the remaining code )
-		' DROP ,	( compile DROP (to drop the length) )
+		['] DROP ,	( compile DROP (to drop the length) )
 	ELSE		( immediate mode )
 		DP @		( get the start address of the temporary space )
 		BEGIN

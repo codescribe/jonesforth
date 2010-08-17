@@ -1962,19 +1962,19 @@ _COMMA:
 	.int EXIT		// Return.
 
 /*
-	' (TICK) is a standard FORTH word which returns the codeword pointer of the next word.
+	['] (BRACKET_TICK) is a standard FORTH word which returns the codeword pointer of the next word.
 
 	The common usage is:
 
-	' FOO ,
+	['] FOO ,
 
 	which appends the codeword of FOO to the current word we are defining (this only works in compiled code).
 
-	You tend to use ' in IMMEDIATE words.  For example an alternate (and rather useless) way to define
+	You tend to use ['] in IMMEDIATE words.  For example an alternate (and rather useless) way to define
 	a literal 2 might be:
 
 	: LIT2 IMMEDIATE
-		' LIT ,		\ Appends LIT to the currently-being-defined word
+		['] LIT ,		\ Appends LIT to the currently-being-defined word
 		2 ,		\ Appends the number 2 to the currently-being-defined word
 	;
 
@@ -1985,11 +1985,16 @@ _COMMA:
 	(If you don't understand how LIT2 works, then you should review the material about compiling words
 	and immediate mode).
 
-	This definition of ' uses a cheat which I copied from buzzard92.  As a result it only works in
-	compiled code.  It is possible to write a version of ' based on WORD, FIND, >CFA which works in
+	This definition of ['] uses a cheat which I copied from buzzard92.  As a result it only works in
+	compiled code.  It is possible to write a version of ['] based on WORD, FIND, >CFA which works in
 	immediate mode too.
+
+	This definition of ['] uses a cheat which I copied from buzzard92.  As a result it only works in
+	compilied and when the word after it is not an immediate word. It is possible to write a version
+	of ['] which works on immediate word, or to write another version based on WORD, FIND, >CFA
+	which works in immediate mode too.
 */
-	defcode "'",1,,TICK
+	defcode "[']",3,,BRACKET_TICK
 	lodsl			// Get the address of the next word and skip it.
 	pushl %eax		// Push it on the stack.
 	NEXT
