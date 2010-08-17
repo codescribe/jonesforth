@@ -800,9 +800,9 @@ code_\label :			// assembler code follows
 */
 
 	defcode "/MOD",4,,DIVMOD
-	xor %edx,%edx
 	pop %ebx
 	pop %eax
+	cdq
 	idivl %ebx
 	push %edx		// push remainder
 	push %eax		// push quotient
