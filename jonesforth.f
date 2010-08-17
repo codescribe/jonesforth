@@ -620,9 +620,8 @@
 	it's a very good idea to make sure that n is a multiple of 4, or at least that next time
 	a word is compiled that DP has been left as a multiple of 4).
 )
-: ALLOT		( n -- addr )
-	DP @ SWAP	( here n )
-	DP +!		( adds n to DP, after this the old value of DP is still on the stack )
+: ALLOT		( n -- )
+	DP +!	( adds n to DP )
 ;
 
 (
@@ -637,7 +636,8 @@
 	diagram above to see what the word that this creates will look like.
 )
 : VARIABLE
-	1 CELLS ALLOT	( allocate 1 cell of memory, push the pointer to this memory )
+	DP @		( push the pointer to variable's memory )
+	1 CELLS ALLOT	( allocate 1 cell of memory )
 	WORD CREATE	( make the dictionary entry (the name follows VARIABLE) )
 	DOCOL ,		( append DOCOL (the codeword field of this word) )
 	' LIT ,		( append the codeword LIT )
@@ -1167,7 +1167,7 @@
 	Another use of :NONAME is to create an array of functions which can be called quickly
 	(think: fast switch statement).  This example is adapted from the ANS FORTH standard:
 
-		10 CELLS ALLOT CONSTANT CMD-TABLE
+		DP @ 10 CELLS ALLOT CONSTANT CMD-TABLE
 		: SET-CMD CELLS CMD-TABLE + ! ;
 		: CALL-CMD CELLS CMD-TABLE + @ EXECUTE ;
 
