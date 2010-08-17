@@ -2079,6 +2079,49 @@ _COMMA:
 	NEXT
 
 /*
+	COMBINING DATA AND BEHAVIOR --------------------------------------------------------
+
+	A FORTH word with codeword DOCOL defines the word's behavior with other FORTH words.
+	On the other hand, a built-in variable's behavior is simply push the pointer to its
+	data onto the stack.
+
+	One will wonder how can a FORTH word which owns complicated data specify its behavior on
+	these data using other FORTH words. The magic word DODOES serves this purpose. 
+
+	The diagram below shows how DODOES works.  When DODOES executes, it pushes the pointer to
+	its data onto the stack and execute the behavior words pointed to by the behavior pointer.
+
+	+---------------------+--------+---------+------+----------------+
+	| (Dictionary header) | DODOES |         | data | behavior words |
+	+---------------------+--------+---------+------+----------------+
+			     behavior pointer |		  ^
+					      |		  |
+					      +-----------+
+
+	When the behavior pointer is zero, there is no behavior words, DODOES simply pushes the pointer to
+	its data onto the stack.
+
+	+---------------------+--------+--------+------+
+	| (Dictionary header) | DODOES |   0    | data |
+	+---------------------+--------+--------+------+
+
+*/
+
+	.text
+	.align 4
+DODOES: 
+	cmpl $0,4(%eax)		// Is offset zero ?
+	jz 1f
+	lea -4(%ebp),%ebp
+	mov %esi,(%ebp)
+	mov 4(%eax),%esi	// Get pointer to behavior words
+1:	lea 8(%eax),%eax
+	push %eax		// Push the pointer to its data
+	NEXT
+
+	defconst "DODOES",6,,__DODOES,DODOES
+
+/*
 	QUIT AND INTERPRET ----------------------------------------------------------------------
 
 	QUIT is the first FORTH function called, almost immediately after the FORTH system "boots".

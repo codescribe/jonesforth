@@ -597,21 +597,17 @@
 ;
 
 (
-	VARIABLE is a little bit harder because we need somewhere to put the variable.  There is
-	nothing particularly special about the user memory (the area of memory pointed to by DP
-	where we have previously just stored new word definitions).  We can slice off bits of this
-	memory area to store anything we want, so one possible definition of VARIABLE might create
+	VARIABLE is a little bit harder because we need somewhere to put the data. The run time
+	behavior of a VARIABLE is to push the pointer to its data on to stack. DODOES with a zero
+	behavior pointer does exactly this. So one possible definition of VARIABLE might create
 	this:
+					      bahavior pointer
+	+---------+---+---+---+---+------------+------------+-------|
+	| LINK    | 3 | V | A | R | DODOES     |     0	    | <var> |
+	+---------+---+---+---+---+------------+------------+-------+
+		   len              codeword
 
-	   +--------------------------------------------------------------+
-	   |								  |
-	   V								  |
-	+---------+---------+---+---+---+---+------------+------------+---|--------+------------+
-	| <var>   | LINK    | 3 | V | A | R | DOCOL      | LIT        | <addr var> | EXIT       |
-	+---------+---------+---+---+---+---+------------+------------+------------+------------+
-        		     len              codeword
-
-	where <var> is the place to store the variable, and <addr var> points back to it.
+	where <var> is the place to store the variable.
 
 	To make this more general let's define a couple of words which we can use to allocate
 	arbitrary memory from the user memory.
@@ -635,14 +631,46 @@
 	So now we can define VARIABLE easily in much the same way as CONSTANT above.  Refer to the
 	diagram above to see what the word that this creates will look like.
 )
+
 : VARIABLE
-	DP @		( push the pointer to variable's memory )
-	1 CELLS ALLOT	( allocate 1 cell of memory )
 	WORD HEADER,	( make the dictionary entry (the name follows VARIABLE) )
-	DOCOL ,		( append DOCOL (the codeword field of this word) )
-	['] LIT ,		( append the codeword LIT )
-	,		( append the pointer to the new memory )
-	['] EXIT ,	( append the codeword EXIT )
+	DODOES , 0 ,	( append DOCOL (the codeword field of this word) )
+	1 CELLS ALLOT	( allocate 1 cell of memory )
+;
+
+(
+	DATA STRUCTURE WITH BEHAVIOR ---------------------------------------------------------
+
+	Data structure with more complicated behavior than VARIABLE can be implemented using DODOES
+	with a nonzero behaviour pointer. CREATE and DOES> are two words used to ease the development
+	of such data structure.
+	As an example of CREATE and DOES>, a new version of CONSTANT is defined below:
+		: MY-CONSTANT   CREATE , DOES> @ ;
+		10 MY-CONSTANT TEN
+
+					      behavior pointer
+	+---------+---+---+---+---+------------+------------+-------+-----+------|
+	| LINK    | 3 | T | E | N | DODOES     |	    |   10  |  @  | EXIT | 
+	+---------+---+---+---+---+------------+------|-----+-------+-----+------|
+		   len              codeword	      |       data    ^
+						      |		      |
+						      +---------------+
+
+	DODOES pushes the pointer to 10 onto the stack, execute the behavior words pointed to by
+	the behavior pointer, namely the @, which fetches the 10 from the pointer on the stack.
+
+	CREATE creates a dictionary header, compiles DODOES and a zero behavior pointer without
+	allocation more data memory. DOES> pointes the behavior pointer to the behavior words.
+
+)
+
+: CREATE
+	WORD HEADER,	( make the dictionary entry (the name follows VARIABLE) )
+	DODOES , 0 ,	( append DOCOL (the codeword field of this word) )
+;
+
+: DOES>
+	R> LATEST @ >DFA !
 ;
 
 (
