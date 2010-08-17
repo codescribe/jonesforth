@@ -74,6 +74,9 @@
 	,		\ compile the literal itself (from the stack)
 	;
 
+\ HERE fetch the data stack pointer.
+: HERE DP @ ;
+
 \ Now we can use [ and ] to insert literals which are calculated at compile time.  (Recall that
 \ [ and ] are the FORTH words which switch into and out of immediate mode.)
 \ Within definitions, use [ ... ] LITERAL anywhere that '...' is a constant expression which you
@@ -137,23 +140,23 @@
 \ off the stack, calculate the offset, and back-fill the offset.
 : IF IMMEDIATE
 	['] 0BRANCH ,	\ compile 0BRANCH
-	DP @		\ save location of the offset on the stack
+	HERE		\ save location of the offset on the stack
 	0 ,		\ compile a dummy offset
 ;
 
 : THEN IMMEDIATE
 	DUP
-	DP @ SWAP -	\ calculate the offset from the address saved on the stack
+	HERE SWAP -	\ calculate the offset from the address saved on the stack
 	SWAP !		\ store the offset in the back-filled location
 ;
 
 : ELSE IMMEDIATE
 	['] BRANCH ,	\ definite branch to just over the false-part
-	DP @		\ save location of the offset on the stack
+	HERE		\ save location of the offset on the stack
 	0 ,		\ compile a dummy offset
 	SWAP		\ now back-fill the original (IF) offset
 	DUP		\ same as for THEN word above
-	DP @ SWAP -
+	HERE SWAP -
 	SWAP !
 ;
 
@@ -162,12 +165,12 @@
 \	where OFFSET points back to the loop-part
 \ This is like do { loop-part } while (condition) in the C language
 : BEGIN IMMEDIATE
-	DP @		\ save location on the stack
+	HERE		\ save location on the stack
 ;
 
 : UNTIL IMMEDIATE
 	['] 0BRANCH ,	\ compile 0BRANCH
-	DP @ -	\ calculate the offset from the address saved on the stack
+	HERE -	\ calculate the offset from the address saved on the stack
 	,		\ compile the offset here
 ;
 
@@ -177,7 +180,7 @@
 \ In other words, an infinite loop which can only be returned from with EXIT
 : AGAIN IMMEDIATE
 	['] BRANCH ,	\ compile BRANCH
-	DP @ -	\ calculate the offset back
+	HERE -	\ calculate the offset back
 	,		\ compile the offset here
 ;
 
@@ -187,16 +190,16 @@
 \ So this is like a while (condition) { loop-part } loop in the C language
 : WHILE IMMEDIATE
 	['] 0BRANCH ,	\ compile 0BRANCH
-	DP @		\ save location of the offset2 on the stack
+	HERE		\ save location of the offset2 on the stack
 	SWAP		\ get the original offset (from BEGIN)
 	0 ,		\ compile a dummy offset2
 ;
 
 : REPEAT IMMEDIATE
 	['] BRANCH ,	\ compile BRANCH
-	DP @ - ,	\ and compile it after BRANCH
+	HERE - ,	\ and compile it after BRANCH
 	DUP
-	DP @ SWAP -	\ calculate the offset2
+	HERE SWAP -	\ calculate the offset2
 	SWAP !		\ and back-fill it in the original location
 ;
 
@@ -436,7 +439,7 @@
 (
 	ALIGN aligns the DP pointer, so the next word appended will be aligned properly.
 )
-: ALIGN DP @ ALIGNED DP ! ;
+: ALIGN HERE ALIGNED DP ! ;
 
 (
 	STRINGS ----------------------------------------------------------------------
@@ -460,14 +463,14 @@
 )
 ( C, appends a byte to the current compiled word. )
 : C,
-	DP @ C!	( store the character in the compiled image )
+	HERE C!	( store the character in the compiled image )
 	1 DP +!	( increment DP pointer by 1 byte )
 ;
 
 : S" IMMEDIATE		( -- addr len )
 	STATE @ IF	( compiling? )
 		['] LITSTRING ,	( compile LITSTRING )
-		DP @		( save the address of the length word on the stack )
+		HERE		( save the address of the length word on the stack )
 		0 ,		( dummy length - we don't know what it is yet )
 		BEGIN
 			KEY 		( get next character of the string )
@@ -477,12 +480,12 @@
 		REPEAT
 		DROP		( drop the double quote character at the end )
 		DUP		( get the saved address of the length word )
-		DP @ SWAP -	( calculate the length )
+		HERE SWAP -	( calculate the length )
 		4-		( subtract 4 (because we measured from the start of the length word) )
 		SWAP !		( and back-fill the length location )
 		ALIGN		( round up to next multiple of 4 bytes for the remaining code )
 	ELSE		( immediate mode )
-		DP @		( get the start address of the temporary space )
+		HERE		( get the start address of the temporary space )
 		BEGIN
 			KEY
 			DUP '"' <>
@@ -491,8 +494,8 @@
 			1+		( increment address )
 		REPEAT
 		DROP		( drop the final " character )
-		DP @ -	( calculate the length )
-		DP @		( push the start address )
+		HERE -	( calculate the length )
+		HERE		( push the start address )
 		SWAP 		( addr len )
 	THEN
 ;
@@ -1054,7 +1057,7 @@
 
 	( Now we search again, looking for the next word in the dictionary.  This gives us
 	  the length of the word that we will be decompiling.  (Well, mostly it does). )
-	DP @		( address of the end of the last compiled word )
+	HERE		( address of the end of the last compiled word )
 	LATEST @	( word last curr )
 	BEGIN
 		2 PICK		( word last curr word )
@@ -1199,7 +1202,7 @@
 	Another use of :NONAME is to create an array of functions which can be called quickly
 	(think: fast switch statement).  This example is adapted from the ANS FORTH standard:
 
-		DP @ 10 CELLS ALLOT CONSTANT CMD-TABLE
+		HERE 10 CELLS ALLOT CONSTANT CMD-TABLE
 		: SET-CMD CELLS CMD-TABLE + ! ;
 		: CALL-CMD CELLS CMD-TABLE + @ EXECUTE ;
 
@@ -1214,7 +1217,7 @@
 
 : :NONAME
 	0 0 HEADER,	( create a word with no name - we need a dictionary header because ; expects it )
-	DP @		( current DP value is the address of the codeword, ie. the xt )
+	HERE		( current DP value is the address of the codeword, ie. the xt )
 	DOCOL ,		( compile DOCOL (the codeword) )
 	]		( go into compile mode )
 ;
@@ -1432,26 +1435,26 @@
 : Z" IMMEDIATE
 	STATE @ IF	( compiling? )
 		['] LITSTRING ,	( compile LITSTRING )
-		DP @		( save the address of the length word on the stack )
+		HERE		( save the address of the length word on the stack )
 		0 ,		( dummy length - we don't know what it is yet )
 		BEGIN
 			KEY 		( get next character of the string )
 			DUP '"' <>
 		WHILE
-			DP @ C!	( store the character in the compiled image )
+			HERE C!	( store the character in the compiled image )
 			1 DP +!	( increment DP pointer by 1 byte )
 		REPEAT
-		0 DP @ C!	( add the ASCII NUL byte )
+		0 HERE C!	( add the ASCII NUL byte )
 		1 DP +!
 		DROP		( drop the double quote character at the end )
 		DUP		( get the saved address of the length word )
-		DP @ SWAP -	( calculate the length )
+		HERE SWAP -	( calculate the length )
 		4-		( subtract 4 (because we measured from the start of the length word) )
 		SWAP !		( and back-fill the length location )
 		ALIGN		( round up to next multiple of 4 bytes for the remaining code )
 		['] DROP ,	( compile DROP (to drop the length) )
 	ELSE		( immediate mode )
-		DP @		( get the start address of the temporary space )
+		HERE		( get the start address of the temporary space )
 		BEGIN
 			KEY
 			DUP '"' <>
@@ -1461,7 +1464,7 @@
 		REPEAT
 		DROP		( drop the final " character )
 		0 SWAP C!	( store final ASCII NUL )
-		DP @		( push the start address )
+		HERE		( push the start address )
 	THEN
 ;
 
@@ -1478,13 +1481,13 @@
 
 : CSTRING	( addr len -- c-addr )
 	SWAP OVER	( len saddr len )
-	DP @ SWAP	( len saddr daddr len )
+	HERE SWAP	( len saddr daddr len )
 	CMOVE		( len )
 
-	DP @ +	( daddr+len )
+	HERE +	( daddr+len )
 	0 SWAP C!	( store terminating NUL char )
 
-	DP @ 		( push start address )
+	HERE 		( push start address )
 ;
 
 (
@@ -1563,7 +1566,7 @@
 
 : UNUSED	( -- n )
 	GET-BRK		( get end of data segment according to the kernel )
-	DP @		( get current position in data segment )
+	HERE		( get current position in data segment )
 	-
 	4 /		( returns number of cells )
 ;
