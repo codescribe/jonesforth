@@ -1,8 +1,13 @@
-My ANS Forth version of jonesforth.
+My ANS Forth consistent version of jonesforth.
 
-The first move is to reimplment the inconsistent part
-of jonesforth. See the non-standard core words section
-in TODO.
+The goal is not to implement an ANS Forth.
+
+The goal is to remove/reimplment the inconsistent part of jonesforth,
+to keep jonesforth's minimalism and to pave the way for others who want
+to implement ANS Forth based on jonesforth.
+
+See the non-standard core words section in TODO to know what will be
+fixed and what are already fixed.
 
 The original jonesforth git repository is at
 	git://git.annexia.org/git/jonesforth.git
