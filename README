@@ -13,8 +13,8 @@ fixed and what are already fixed.
 
 Part of the work is based on Richard Russel's bb4wforth.
 
-The original jonesforth git repository is at
-	git://git.annexia.org/git/jonesforth.git
+Richard W.M. Jones' jonesforth git repository:
+	http://rwmj.wordpress.com/2010/08/07/jonesforth-git-repository/
 
 The source code of bb4wforth:
 	http://www.rtr.myzen.co.uk/bb4wforth.zip
