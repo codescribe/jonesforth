@@ -648,22 +648,27 @@
 	with a nonzero behaviour pointer. CREATE and DOES> are two words used to ease the development
 	of such data structure.
 	As an example of CREATE and DOES>, a new version of CONSTANT is defined below:
-		: MY-CONSTANT   CREATE , DOES> @ ;
-		10 MY-CONSTANT TEN
+		: CONST   CREATE , DOES> @ ;
+		10 CONST TEN
 
-					      behavior pointer
-	+---------+---+---+---+---+------------+------------+-------+-----+------|
-	| LINK    | 3 | T | E | N | DODOES     |	    |   10  |  @  | EXIT | 
-	+---------+---+---+---+---+------------+------|-----+-------+-----+------|
-		   len              codeword	      |       data    ^
-						      |		      |
-						      +---------------+
+	+-------+---+---+---+---+---+---+-------+----------------+---------|
+	| LINK  | 5 | C | O | N | S | T | DOCOL | CREATE , DOES> | @ EXIT  |
+	+-------+---+---+---+---+---+---+-------+----------------+---------|
+								   ^
+								   |
+						      +------------+
+				      behavior pointer|
+	+---------+---+---+---+---+------------+------|-----+-------+
+	| LINK    | 3 | T | E | N | DODOES     |	    |   10  |
+	+---------+---+---+---+---+------------+------------+-------+
+		   len              codeword	              data
 
 	DODOES pushes the pointer to 10 onto the stack, execute the behavior words pointed to by
 	the behavior pointer, namely the @, which fetches the 10 from the pointer on the stack.
 
 	CREATE creates a dictionary header, compiles DODOES and a zero behavior pointer without
-	allocation more data memory. DOES> pointes the behavior pointer to the behavior words.
+	allocation more data memory. DOES> pointes the behavior pointer to the behavior words, return
+	to its caller without executing the behavior words behind it.
 
 )
 
