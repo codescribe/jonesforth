@@ -1494,11 +1494,14 @@ _NUMBER:
 
 	We're building up to our prelude on how FORTH code is compiled, but first we need yet more infrastructure.
 
-	The FORTH word FIND takes a string (a word as parsed by WORD -- see above) and looks it up in the
-	dictionary.  What it actually returns is the address of the dictionary header, if it finds it,
-	or 0 if it didn't.
+	The FORTH word (FIND) takes a string (a word as parsed by WORD -- see above) and looks it up in the
+	dictionary.  What it actually returns is the address of the dictionary header, if it finds it, or 0 if it
+	didn't.
 
-	So if DOUBLE is defined in the dictionary, then WORD DOUBLE FIND returns the following pointer:
+	This word is call (FIND) but not simply FIND because FIND is a standard ANS Forth word which does a little
+	more than (FIND).
+
+	So if DOUBLE is defined in the dictionary, then WORD DOUBLE (FIND) returns the following pointer:
 
     pointer to this
 	|
@@ -1510,10 +1513,10 @@ _NUMBER:
 
 	See also >CFA and >DFA.
 
-	FIND doesn't find dictionary entries which are flagged as HIDDEN.  See below for why.
+	(FIND) doesn't find dictionary entries which are flagged as HIDDEN.  See below for why.
 */
 
-	defcode "FIND",4,,FIND
+	defcode "(FIND)",6,,PAREN_FIND
 	pop %ecx		// %ecx = length
 	pop %edi		// %edi = address
 	call _FIND
@@ -1560,15 +1563,15 @@ _FIND:
 	ret
 
 /*
-	FIND returns the dictionary pointer, but when compiling we need the codeword pointer (recall
+	(FIND) returns the dictionary pointer, but when compiling we need the codeword pointer (recall
 	that FORTH definitions are compiled into lists of codeword pointers).  The standard FORTH
 	word >CFA turns a dictionary pointer into a codeword pointer.
 
 	The example below shows the result of:
 
-		WORD DOUBLE FIND >CFA
+		WORD DOUBLE (FIND) >CFA
 
-	FIND returns a pointer to this
+	(FIND) returns a pointer to this
 	|				>CFA converts it to a pointer to this
 	|					   |
 	V					   V
@@ -1607,10 +1610,10 @@ _TCFA:
 	ret
 
 /*
-	Related to >CFA is >DFA which takes a dictionary entry address as returned by FIND and
+	Related to >CFA is >DFA which takes a dictionary entry address as returned by (FIND) and
 	returns a pointer to the first data field.
 
-	FIND returns a pointer to this
+	(FIND) returns a pointer to this
 	|				>CFA converts it to a pointer to this
 	|					   |
 	|					   |	>DFA converts it to a pointer to this
@@ -1658,7 +1661,7 @@ _TCFA:
 	allows you to change how the compiler works on your own code.
 
 	FORTH has an INTERPRET function (a true interpreter this time, not DOCOL) which runs in a
-	loop, reading words (using WORD), looking them up (using FIND), turning them into codeword
+	loop, reading words (using WORD), looking them up (using (FIND)), turning them into codeword
 	pointers (using >CFA) and deciding what to do with them.
 
 	What it does depends on the mode of the interpreter (in variable STATE).
@@ -1751,7 +1754,7 @@ _TCFA:
 	half-finished state.  We certainly wouldn't want DOUBLE to be called somehow during
 	this time.  There are several ways to stop this from happening, but in FORTH what we
 	do is flag the word with the HIDDEN flag (F_HIDDEN in this code) just while it is
-	being compiled.  This prevents FIND from finding it, and thus in theory stops any
+	being compiled.  This prevents (FIND) from finding it, and thus in theory stops any
 	chance of it being called.
 
 	The above explains how compiling, : (COLON) and ; (SEMICOLON) works and in a moment I'm
@@ -1935,7 +1938,7 @@ _COMMA:
 
 	'HIDE word' toggles the flag on a named 'word'.
 
-	Setting this flag stops the word from being found by FIND, and so can be used to make 'private'
+	Setting this flag stops the word from being found by (FIND), and so can be used to make 'private'
 	words.  For example, to break up a large word into smaller parts you might do:
 
 		: SUB1 ... subword ... ;
@@ -1957,7 +1960,7 @@ _COMMA:
 
 	defword "HIDE",4,,HIDE
 	.int WORD		// Get the word (after HIDE).
-	.int FIND		// Look up in the dictionary.
+	.int PAREN_FIND		// Look up in the dictionary.
 	.int HIDDEN		// Set F_HIDDEN flag.
 	.int EXIT		// Return.
 
@@ -1986,12 +1989,12 @@ _COMMA:
 	and immediate mode).
 
 	This definition of ['] uses a cheat which I copied from buzzard92.  As a result it only works in
-	compiled code.  It is possible to write a version of ['] based on WORD, FIND, >CFA which works in
+	compiled code.  It is possible to write a version of ['] based on WORD, (FIND), >CFA which works in
 	immediate mode too.
 
 	This definition of ['] uses a cheat which I copied from buzzard92.  As a result it only works in
 	compilied and when the word after it is not an immediate word. It is possible to write a version
-	of ['] which works on immediate word, or to write another version based on WORD, FIND, >CFA
+	of ['] which works on immediate word, or to write another version based on WORD, (FIND), >CFA
 	which works in immediate mode too.
 */
 	defcode "[']",3,,BRACKET_TICK

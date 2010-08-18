@@ -101,7 +101,7 @@
 \ While compiling, '[COMPILE] word' compiles 'word' if it would otherwise be IMMEDIATE.
 : [COMPILE] IMMEDIATE
 	WORD		\ get the next word
-	FIND		\ find it in the dictionary
+	(FIND)		\ find it in the dictionary
 	>CFA		\ get its codeword
 	,		\ and compile that
 ;
@@ -742,7 +742,7 @@
 
 : TO IMMEDIATE	( n -- )
 	WORD		( get the name of the value )
-	FIND		( look it up in the dictionary )
+	(FIND)		( look it up in the dictionary )
 	>DFA		( get a pointer to the first data field (the 'LIT') )
 	4+		( increment to point at the value )
 	STATE @ IF	( compiling? )
@@ -757,7 +757,7 @@
 ( x +TO VAL adds x to VAL )
 : +TO IMMEDIATE
 	WORD		( get the name of the value )
-	FIND		( look it up in the dictionary )
+	(FIND)		( look it up in the dictionary )
 	>DFA		( get a pointer to the first data field (the 'LIT') )
 	4+		( increment to point at the value )
 	STATE @ IF	( compiling? )
@@ -793,9 +793,9 @@
 ;
 
 (
-	'WORD word FIND ?HIDDEN' returns true if 'word' is flagged as hidden.
+	'WORD word (FIND) ?HIDDEN' returns true if 'word' is flagged as hidden.
 
-	'WORD word FIND ?IMMEDIATE' returns true if 'word' is flagged as immediate.
+	'WORD word (FIND) ?IMMEDIATE' returns true if 'word' is flagged as immediate.
 )
 : ?HIDDEN
 	4+		( skip over the link pointer )
@@ -849,7 +849,7 @@
 	in the current implementation VARIABLE FOO FORGET FOO will leak 1 cell of memory.
 )
 : FORGET
-	WORD FIND	( find the word, gets the dictionary entry address )
+	WORD (FIND)	( find the word, gets the dictionary entry address )
 	DUP @ LATEST !	( set LATEST to point to the previous word )
 	DP !		( and store DP with the dictionary address )
 ;
@@ -1058,7 +1058,7 @@
 	recognise "meta-words" like LIT, LITSTRING, BRANCH, etc. and treat those separately.
 )
 : SEE
-	WORD FIND	( find the dictionary entry to decompile )
+	WORD (FIND)	( find the dictionary entry to decompile )
 
 	( Now we search again, looking for the next word in the dictionary.  This gives us
 	  the length of the word that we will be decompiling.  (Well, mostly it does). )
@@ -1161,11 +1161,11 @@
 	There is one assembler primitive for execution tokens, EXECUTE ( xt -- ), which runs them.
 
 	You can make an execution token for an existing word the long way using >CFA,
-	ie: WORD [foo] FIND >CFA will push the xt for foo onto the stack where foo is the
+	ie: WORD [foo] (FIND) >CFA will push the xt for foo onto the stack where foo is the
 	next word in input.  So a very slow way to run DOUBLE might be:
 
 		: DOUBLE DUP + ;
-		: SLOW WORD FIND >CFA EXECUTE ;
+		: SLOW WORD (FIND) >CFA EXECUTE ;
 		5 SLOW DOUBLE . CR	\ prints 10
 
 	We also offer a simpler and faster way to get the execution token of any word FOO:
@@ -1228,7 +1228,7 @@
 ;
 
 : '	( "<spaces>name" -- xt )
-	WORD FIND >CFA
+	WORD (FIND) >CFA
 ;
 
 (
@@ -1793,7 +1793,7 @@ DECIMAL
 ;
 
 : INLINE IMMEDIATE
-	WORD FIND		( find the word in the dictionary )
+	WORD (FIND)		( find the word in the dictionary )
 	>CFA			( codeword )
 
 	DUP @ DOCOL = IF	( check codeword <> DOCOL (ie. not a FORTH word) )
@@ -1819,7 +1819,7 @@ HIDE =NEXT
 )
 
 : WELCOME
-	S" TEST-MODE" FIND NOT IF
+	S" TEST-MODE" (FIND) NOT IF
 		." JONESFORTH VERSION " VERSION . CR
 		UNUSED . ." CELLS REMAINING" CR
 		." OK "
