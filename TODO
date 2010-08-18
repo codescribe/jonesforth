@@ -14,7 +14,8 @@ Non standard core words
 		ANS version of CREATE implemented using bb4wforth's fix
 	VARIABLE	fixed in jonesforth.fs
 	TRUE
-	FIND
+	FIND	not yet implemented. jonesforth's FIND is renamed to
+		(FIND).
 	WHILE	fixed using bb4wforth's fix.
 	REPEAT	fixed using bb4wforth's fix.
 	WORD
