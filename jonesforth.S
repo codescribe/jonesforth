@@ -821,9 +821,9 @@ code_\label :			// assembler code follows
 	Lots of comparison operations like =, <, >, etc..
 
 	ANS FORTH says that the comparison words should return all (binary) 1's for
-	TRUE and all 0's for FALSE.  However this is a bit of a strange convention
-	so this FORTH breaks it and returns the more normal (for C programmers ...)
-	1 meaning TRUE and 0 meaning FALSE.
+	TRUE and all 0's for FALSE.  This is a bit of a strange convention for C
+	programmers ...
+	Anyway, -1 meaning TRUE and 0 meaning FALSE.
 */
 
 	defcode "=",1,,EQU	// top two words are equal?
@@ -832,6 +832,7 @@ code_\label :			// assembler code follows
 	cmp %ebx,%eax
 	sete %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -841,6 +842,7 @@ code_\label :			// assembler code follows
 	cmp %ebx,%eax
 	setne %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -850,6 +852,7 @@ code_\label :			// assembler code follows
 	cmp %eax,%ebx
 	setl %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -859,6 +862,7 @@ code_\label :			// assembler code follows
 	cmp %eax,%ebx
 	setg %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -868,6 +872,7 @@ code_\label :			// assembler code follows
 	cmp %eax,%ebx
 	setle %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -877,6 +882,7 @@ code_\label :			// assembler code follows
 	cmp %eax,%ebx
 	setge %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -885,6 +891,7 @@ code_\label :			// assembler code follows
 	test %eax,%eax
 	setz %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -893,6 +900,7 @@ code_\label :			// assembler code follows
 	test %eax,%eax
 	setnz %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -901,6 +909,7 @@ code_\label :			// assembler code follows
 	test %eax,%eax
 	setl %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -909,6 +918,7 @@ code_\label :			// assembler code follows
 	test %eax,%eax
 	setg %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -917,6 +927,7 @@ code_\label :			// assembler code follows
 	test %eax,%eax
 	setle %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 
@@ -925,6 +936,7 @@ code_\label :			// assembler code follows
 	test %eax,%eax
 	setge %al
 	movzbl %al,%eax
+	neg %eax
 	pushl %eax
 	NEXT
 

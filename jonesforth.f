@@ -64,7 +64,7 @@
 : NEGATE 0 SWAP - ;
 
 \ Standard words for booleans.
-: TRUE  1 ;
+: TRUE  -1 ;
 : FALSE 0 ;
 : NOT   0= ;
 

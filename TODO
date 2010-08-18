@@ -13,7 +13,7 @@ Non standard core words
 	CREATE	renamed jonesforth's version to HEADER,
 		ANS version of CREATE implemented using bb4wforth's fix
 	VARIABLE	fixed in jonesforth.fs
-	TRUE
+	TRUE	fixed. All the comparison words returns -1 for TRUE.
 	FIND	not yet implemented. jonesforth's FIND is renamed to
 		(FIND).
 	WHILE	fixed using bb4wforth's fix.
