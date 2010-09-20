@@ -2252,6 +2252,20 @@ interpret_is_lit:
 	.int 0			// Flag used to record if reading a literal
 
 /*
+	ANS Forth Core Words  ----------------------------------------------------------------------
+	Some lower level ANS Forth CORE words are not presented in the orignal jonesforth. They are
+	included here without explaination.
+*/
+
+	defcode "2*",2,,TWOMUL
+	shll $1, (%esp)
+	NEXT
+
+	defcode "2/",2,,TWODIV
+	sarl $1, (%esp)
+	NEXT
+
+/*
 	ODDS AND ENDS ----------------------------------------------------------------------
 
 	CHAR puts the ASCII code of the first character of the following word on the stack.  For example
