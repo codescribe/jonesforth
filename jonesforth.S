@@ -2257,12 +2257,43 @@ interpret_is_lit:
 	included here without explaination.
 */
 
+/* Macros to deal with the return stack. */
+	.macro PUSH2RSP reg1,reg2
+	lea -8(%ebp),%ebp	// push reg1 and reg2 on to return stack
+	movl \reg1,4(%ebp)
+	movl \reg2,(%ebp)
+	.endm
+
+	.macro POP2RSP reg1, reg2
+	mov (%ebp),\reg2	// pop top of return stack to reg1 and reg2
+	mov 4(%ebp), \reg1
+	lea 8(%ebp),%ebp
+	.endm
+
 	defcode "2*",2,,TWOMUL
 	shll $1, (%esp)
 	NEXT
 
 	defcode "2/",2,,TWODIV
 	sarl $1, (%esp)
+	NEXT
+
+	defcode "(DO)", 4,,PAREN_DO
+	pop %eax		// pop parameter stack into %eax and %edx
+	pop %edx
+	PUSH2RSP %edx, %eax	// push it on to the return stack
+	NEXT
+
+	defcode "(LOOP)", 6,,PAREN_LOOP
+	POP2RSP %edx, %eax
+	inc %eax
+	cmp %edx, %eax
+	je 1f
+	PUSH2RSP %edx, %eax
+	add (%esi),%esi		// add the offset to the instruction pointer
+	NEXT
+1:
+	lodsl
 	NEXT
 
 /*

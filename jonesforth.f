@@ -917,6 +917,33 @@
 ;
 
 (
+	Some high level ANS Forth CORE words are not presented in the original jonesforth. They
+	are included here without explanation. Most of them are adapted from bb4wforth.
+)
+
+: [CHAR] ( "<spaces>name" -- ) CHAR ['] LIT , , ; IMMEDIATE
+: 2OVER ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 ) 3 PICK 3 PICK ;
+: CELL+ ( a-addr1 -- a-addr2 ) 1 CELLS + ;
+: CHARS ( n1 -- n2 ) ;
+: CHAR+ ( c-addr1 -- c-addr2 ) 1 CHARS + ;
+: 2! ( x1 x2 a-addr -- ) SWAP OVER ! CELL+ ! ;
+: 2@ ( a-addr -- x1 x2 ) DUP CELL+ @ SWAP @ ;
+: MOVE ( addr1 addr2 u -- ) CMOVE ;
+: 2>R ( x1 x2 -- ) ( R: -- x1 x2 ) ['] SWAP , ['] >R , ['] >R , ; IMMEDIATE
+: 2R> ( -- x1 x2 ) ( R: x1 x2 -- ) ['] R> , ['] R> , ['] SWAP , ; IMMEDIATE
+: 2R@ ( -- x1 x2 ) ( R: x1 x2 -- x1 x2 )
+	2R> 2DUP 2>R ;
+: DO	( -- here )
+	['] (DO) ,
+	HERE
+	; IMMEDIATE
+: LOOP
+	['] (LOOP) , 
+	HERE -
+	,
+	; IMMEDIATE
+
+(
 	CASE ----------------------------------------------------------------------
 
 	CASE...ENDCASE is how we do switch statements in FORTH.  There is no generally
@@ -1110,6 +1137,12 @@
 		ENDOF
 		['] BRANCH OF		( is it BRANCH ? )
 			." BRANCH ( "
+			4 + DUP @		( print the offset )
+			.
+			." ) "
+		ENDOF
+		['] (LOOP) OF		( is it (LOOP) ? )
+			." (LOOP) ( "
 			4 + DUP @		( print the offset )
 			.
 			." ) "
@@ -1811,22 +1844,6 @@ HIDE =NEXT
 	DOES> isn't possible to implement with this FORTH because we don't have a separate
 	data pointer.
 )
-
-(
-	Some high level ANS Forth CORE words are not presented in the original jonesforth. They
-	are included here without explanation. Most of them are adapted from bb4wforth.
-)
-
-: [CHAR] ( "<spaces>name" -- ) CHAR ['] LIT , , ; IMMEDIATE
-: 2OVER ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 ) 3 PICK 3 PICK ;
-: CELL+ ( a-addr1 -- a-addr2 ) 1 CELLS + ;
-: CHARS ( n1 -- n2 ) ;
-: CHAR+ ( c-addr1 -- c-addr2 ) 1 CHARS + ;
-: 2! ( x1 x2 a-addr -- ) SWAP OVER ! CELL+ ! ;
-: 2@ ( a-addr -- x1 x2 ) DUP CELL+ @ SWAP @ ;
-: MOVE ( addr1 addr2 u -- ) CMOVE ;
-: 2>R ( x1 x2 -- ) ( R: -- x1 x2 ) ['] SWAP , ['] >R , ['] >R , ; IMMEDIATE
-: 2R> ( -- x1 x2 ) ( R: x1 x2 -- ) ['] R> , ['] R> , ['] SWAP , ; IMMEDIATE
 
 (
 	WELCOME MESSAGE ----------------------------------------------------------------------
