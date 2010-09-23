@@ -2,46 +2,44 @@ Acoording to ANSForth and bb4wforth, jonesforth 47 is not
 in compliance with ANS Forth.
 
 Core words with bugs ()
-	/MOD	fixed in jonesforth.S using bb4wforth's fix
-	U.	fixed in jonesforth using bb4wforth's fix
+	/MOD	fixed in jonesforth.S using bb4wforth's version.
+	U.	fixed in jonesforth using bb4wforth's version.
 
 Non standard core words
-	DEPTH	fixed in jonesforth.fs using bb4wforth's fix
-	.S	fixed in jonesforth.fs
-	HERE	implemented. jonesforth's HERE is renamed to DP. 
-	ALLOT	fixed in jonesforth.fs.
+	DEPTH	fixed in jonesforth.fs using bb4wforth's version.
+	.S	fixed by ccwu.
+	HERE	implemented by ccwu. jonesforth's HERE is
+		renamed to DP. 
+	ALLOT	fixed by ccwu.
 	CREATE	renamed jonesforth's version to HEADER,
-		ANS version of CREATE implemented using bb4wforth's fix
-	VARIABLE	fixed in jonesforth.fs
-	TRUE	fixed. All the comparison words returns -1 for TRUE.
+		ANS version of CREATE implemented using bb4wforth's version.
+	VARIABLE	fixed by ccwu.
+	TRUE	fixed by ccwu. All the comparison words returns -1 for
+		TRUE.
 	FIND	not yet implemented. jonesforth's FIND is renamed to
 		(FIND).
-	WHILE	fixed using bb4wforth's fix.
-	REPEAT	fixed using bb4wforth's fix.
+	WHILE	fixed using bb4wforth's version.
+	REPEAT	fixed using bb4wforth's version.
 	WORD
 	KEY
 	[']	doesn't work on immediate word.
-	'	fixed.
+	'	fixed by ccwu.
 	IMMEDIATE
-
-Core Words implemented 
-	          
-	
 
 Core Words not yet implemented
 	DOES>
-	2!		fixed using bb4wforth's version
-	2*		fixed using bb4wforth's version
-	2/		fixed using bb4wforth's version
-	2@		fixed using bb4wforth's version
-	2OVER		fixed using bb4wforth's version
-	CELL+		fixed using bb4wforth's version
-	CHAR+		fixed using bb4wforth's version
-	CHARS		fixed using bb4wforth's version
-	MOVE		fixed using bb4wforth's version
-	[CHAR]		fixed using bb4wforth's version
-	DO		implemented by ccwu
-	LOOP		implemented by ccwu
+	2!		fixed using bb4wforth's version.
+	2*		fixed using bb4wforth's version.
+	2/		fixed using bb4wforth's version.
+	2@		fixed using bb4wforth's version.
+	2OVER		fixed using bb4wforth's version.
+	CELL+		fixed using bb4wforth's version.
+	CHAR+		fixed using bb4wforth's version.
+	CHARS		fixed using bb4wforth's version.
+	MOVE		fixed using bb4wforth's version.
+	[CHAR]		fixed using bb4wforth's version.
+	DO		implemented by ccwu.
+	LOOP		implemented by ccwu.
 
 	# #> #S */ */MOD +LOOP <# >BODY >IN >NUMBER
 	ABORT" ABS ACCEPT COUNT ENVIRONMENT?
@@ -50,8 +48,8 @@ Core Words not yet implemented
 	UNLOOP LSHIFT RSHIFT 
 
 Core extension words not yet implemented
-	2>R		fixed using bb4wforth's version
-	2R>		fixed using bb4wforth's version
+	2>R		fixed using bb4wforth's version.
+	2R>		fixed using bb4wforth's version.
 
 	#TIB .( 2R@ ?DO C" COMPILE, CONVERT ERASE EXPECT MARKER
 	PAD PARSE QUERY REFILL RESTORE-INPUT ROLL SAVE-INPUT SOURCE-ID
