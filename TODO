@@ -24,22 +24,35 @@ Non standard core words
 	'	fixed.
 	IMMEDIATE
 
-Core Words implemented using bb4wforth's version
-	DOES> 2! 2* 2/ 2@ 2OVER CELL+ CHAR+ CHARS MOVE 
-	[CHAR]
-
-Core extension words implemented using bb4wforth's version
-	2>R 2R> 
+Core Words implemented 
+	          
+	
 
 Core Words not yet implemented
+	DOES>
+	2!		fixed using bb4wforth's version
+	2*		fixed using bb4wforth's version
+	2/		fixed using bb4wforth's version
+	2@		fixed using bb4wforth's version
+	2OVER		fixed using bb4wforth's version
+	CELL+		fixed using bb4wforth's version
+	CHAR+		fixed using bb4wforth's version
+	CHARS		fixed using bb4wforth's version
+	MOVE		fixed using bb4wforth's version
+	[CHAR]		fixed using bb4wforth's version
+	DO		implemented by ccwu
+	LOOP		implemented by ccwu
 
 	# #> #S */ */MOD +LOOP <# >BODY >IN >NUMBER
-	ABORT" ABS ACCEPT COUNT DO ENVIRONMENT?
-	EVALUATE FILL FM/MOD HOLD I J LEAVE LOOP M* MAX MIN
+	ABORT" ABS ACCEPT COUNT ENVIRONMENT?
+	EVALUATE FILL FM/MOD HOLD I J LEAVE M* MAX MIN
 	POSTPONE R@ S>D SIGN SM/REM SOURCE U< UM* UM/MOD
 	UNLOOP LSHIFT RSHIFT 
 
 Core extension words not yet implemented
+	2>R		fixed using bb4wforth's version
+	2R>		fixed using bb4wforth's version
+
 	#TIB .( 2R@ ?DO C" COMPILE, CONVERT ERASE EXPECT MARKER
 	PAD PARSE QUERY REFILL RESTORE-INPUT ROLL SAVE-INPUT SOURCE-ID
 	SPAN TIB U> 
