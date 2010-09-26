@@ -1152,6 +1152,12 @@
 			.
 			." ) "
 		ENDOF
+		['] (+LOOP) OF		( is it (+LOOP) ? )
+			." (+LOOP) ( "
+			4 + DUP @		( print the offset )
+			.
+			." ) "
+		ENDOF
 		['] ['] OF			( is it ['] (BRACKET_TICK) ? )
 			." ['] "
 			4 + DUP @		( get the next codeword )
