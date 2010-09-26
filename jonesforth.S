@@ -2311,6 +2311,10 @@ interpret_is_lit:
 	lodsl
 	NEXT
 
+	defcode "UNLOOP", 6,,UNLOOP
+	lea 8(%ebp),%ebp
+	NEXT
+
 /*
 	ODDS AND ENDS ----------------------------------------------------------------------
 
