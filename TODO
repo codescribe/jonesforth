@@ -41,6 +41,7 @@ Core Words not yet implemented
 	DO		implemented by ccwu.
 	LOOP		implemented by ccwu.
 	+LOOP		implemented by ccwu.
+	UNLOOP		implemented by ccwu.
 	I		implemented by ccwu.
 	J		implemented by ccwu.
 
@@ -48,7 +49,7 @@ Core Words not yet implemented
 	ABORT" ABS ACCEPT COUNT ENVIRONMENT?
 	EVALUATE FILL FM/MOD HOLD LEAVE M* MAX MIN
 	POSTPONE R@ S>D SIGN SM/REM SOURCE U< UM* UM/MOD
-	UNLOOP LSHIFT RSHIFT 
+	LSHIFT RSHIFT 
 
 Core extension words not yet implemented
 	2>R		fixed using bb4wforth's version.
