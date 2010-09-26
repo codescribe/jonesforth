@@ -40,8 +40,9 @@ Core Words not yet implemented
 	[CHAR]		fixed using bb4wforth's version.
 	DO		implemented by ccwu.
 	LOOP		implemented by ccwu.
+	+LOOP		implemented by ccwu.
 
-	# #> #S */ */MOD +LOOP <# >BODY >IN >NUMBER
+	# #> #S */ */MOD <# >BODY >IN >NUMBER
 	ABORT" ABS ACCEPT COUNT ENVIRONMENT?
 	EVALUATE FILL FM/MOD HOLD I J LEAVE M* MAX MIN
 	POSTPONE R@ S>D SIGN SM/REM SOURCE U< UM* UM/MOD
