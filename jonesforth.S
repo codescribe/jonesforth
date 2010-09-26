@@ -2296,6 +2296,21 @@ interpret_is_lit:
 	lodsl
 	NEXT
 
+	defcode "(+LOOP)", 7,,PAREN_PLUS_LOOP
+	POP2RSP %edx, %eax	// index in %eax, limit in %edx
+	sub %edx, %eax		// index-limit in %eax
+	pop %ebx		// n in %ebx
+	add %eax, %ebx		// index-limit+n in %ebx
+	xor %ebx, %eax		// (index-limit) and (index-limit+n) have different sign?
+	js 1f
+	add %edx, %ebx		// index+n in %ebx
+	PUSH2RSP %edx, %ebx
+	add (%esi),%esi		// add the offset to the instruction pointer
+	NEXT
+1:
+	lodsl
+	NEXT
+
 /*
 	ODDS AND ENDS ----------------------------------------------------------------------
 
