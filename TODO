@@ -41,10 +41,12 @@ Core Words not yet implemented
 	DO		implemented by ccwu.
 	LOOP		implemented by ccwu.
 	+LOOP		implemented by ccwu.
+	I		implemented by ccwu.
+	J		implemented by ccwu.
 
 	# #> #S */ */MOD <# >BODY >IN >NUMBER
 	ABORT" ABS ACCEPT COUNT ENVIRONMENT?
-	EVALUATE FILL FM/MOD HOLD I J LEAVE M* MAX MIN
+	EVALUATE FILL FM/MOD HOLD LEAVE M* MAX MIN
 	POSTPONE R@ S>D SIGN SM/REM SOURCE U< UM* UM/MOD
 	UNLOOP LSHIFT RSHIFT 
 

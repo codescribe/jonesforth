@@ -2315,6 +2315,14 @@ interpret_is_lit:
 	lea 8(%ebp),%ebp
 	NEXT
 
+	defcode "I", 1,,I
+	push (%ebp)
+	NEXT
+
+	defcode "J", 1,,J
+	push 8(%ebp)
+	NEXT
+
 /*
 	ODDS AND ENDS ----------------------------------------------------------------------
 
