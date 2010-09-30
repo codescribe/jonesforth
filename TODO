@@ -44,6 +44,9 @@ Core Words not yet implemented
 	UNLOOP		implemented by ccwu.
 	I		implemented by ccwu.
 	J		implemented by ccwu.
+	LEAVE		implemented by ccwu using a leave stack of depth 31.
+			ABORT or QUIT should reset the leave stack pointer,
+			which is not yet implemented.
 
 	# #> #S */ */MOD <# >BODY >IN >NUMBER
 	ABORT" ABS ACCEPT COUNT ENVIRONMENT?

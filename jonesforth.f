@@ -917,38 +917,6 @@
 ;
 
 (
-	Some high level ANS Forth CORE words are not presented in the original jonesforth. They
-	are included here without explanation. Most of them are adapted from bb4wforth.
-)
-
-: [CHAR] ( "<spaces>name" -- ) CHAR ['] LIT , , ; IMMEDIATE
-: 2OVER ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 ) 3 PICK 3 PICK ;
-: CELL+ ( a-addr1 -- a-addr2 ) 1 CELLS + ;
-: CHARS ( n1 -- n2 ) ;
-: CHAR+ ( c-addr1 -- c-addr2 ) 1 CHARS + ;
-: 2! ( x1 x2 a-addr -- ) SWAP OVER ! CELL+ ! ;
-: 2@ ( a-addr -- x1 x2 ) DUP CELL+ @ SWAP @ ;
-: MOVE ( addr1 addr2 u -- ) CMOVE ;
-: 2>R ( x1 x2 -- ) ( R: -- x1 x2 ) ['] SWAP , ['] >R , ['] >R , ; IMMEDIATE
-: 2R> ( -- x1 x2 ) ( R: x1 x2 -- ) ['] R> , ['] R> , ['] SWAP , ; IMMEDIATE
-: 2R@ ( -- x1 x2 ) ( R: x1 x2 -- x1 x2 )
-	2R> 2DUP 2>R ;
-: DO	( -- here )
-	['] (DO) ,
-	HERE
-	; IMMEDIATE
-: LOOP
-	['] (LOOP) , 
-	HERE -
-	,
-	; IMMEDIATE
-: +LOOP
-	['] (+LOOP) , 
-	HERE -
-	,
-	; IMMEDIATE
-
-(
 	CASE ----------------------------------------------------------------------
 
 	CASE...ENDCASE is how we do switch statements in FORTH.  There is no generally
@@ -1041,6 +1009,209 @@
 		[COMPILE] THEN
 	REPEAT
 ;
+
+(
+	EXCEPTIONS ----------------------------------------------------------------------
+
+	Amazingly enough, exceptions can be implemented directly in FORTH, in fact rather easily.
+
+	The general usage is as follows:
+
+		: FOO ( n -- ) THROW ;
+
+		: TEST-EXCEPTIONS
+			25 ['] FOO CATCH	\ execute 25 FOO, catching any exception
+			?DUP IF
+				." called FOO and it threw exception number: "
+				. CR
+				DROP		\ we have to drop the argument of FOO (25)
+			THEN
+		;
+		\ prints: called FOO and it threw exception number: 25
+
+	CATCH runs an execution token and detects whether it throws any exception or not.  The
+	stack signature of CATCH is rather complicated:
+
+		( a_n-1 ... a_1 a_0 xt -- r_m-1 ... r_1 r_0 0 )		if xt did NOT throw an exception
+		( a_n-1 ... a_1 a_0 xt -- ?_n-1 ... ?_1 ?_0 e )		if xt DID throw exception 'e'
+
+	where a_i and r_i are the (arbitrary number of) argument and return stack contents
+	before and after xt is EXECUTEd.  Notice in particular the case where an exception
+	is thrown, the stack pointer is restored so that there are n of _something_ on the
+	stack in the positions where the arguments a_i used to be.  We don't really guarantee
+	what is on the stack -- perhaps the original arguments, and perhaps other nonsense --
+	it largely depends on the implementation of the word that was executed.
+
+	THROW, ABORT and a few others throw exceptions.
+
+	Exception numbers are non-zero integers.  By convention the positive numbers can be used
+	for app-specific exceptions and the negative numbers have certain meanings defined in
+	the ANS FORTH standard.  (For example, -1 is the exception thrown by ABORT).
+
+	0 THROW does nothing.  This is the stack signature of THROW:
+
+		( 0 -- )
+		( * e -- ?_n-1 ... ?_1 ?_0 e )	the stack is restored to the state from the corresponding CATCH
+
+	The implementation hangs on the definitions of CATCH and THROW and the state shared
+	between them.
+
+	Up to this point, the return stack has consisted merely of a list of return addresses,
+	with the top of the return stack being the return address where we will resume executing
+	when the current word EXITs.  However CATCH will push a more complicated 'exception stack
+	frame' on the return stack.  The exception stack frame records some things about the
+	state of execution at the time that CATCH was called.
+
+	When called, THROW walks up the return stack (the process is called 'unwinding') until
+	it finds the exception stack frame.  It then uses the data in the exception stack frame
+	to restore the state allowing execution to continue after the matching CATCH.  (If it
+	unwinds the stack and doesn't find the exception stack frame then it prints a message
+	and drops back to the prompt, which is also normal behaviour for so-called 'uncaught
+	exceptions').
+
+	This is what the exception stack frame looks like.  (As is conventional, the return stack
+	is shown growing downwards from higher to lower memory addresses).
+
+		+------------------------------+
+		| return address from CATCH    |   Notice this is already on the
+		|                              |   return stack when CATCH is called.
+		+------------------------------+
+		| original parameter stack     |
+		| pointer                      |
+		+------------------------------+  ^
+		| exception stack marker       |  |
+		| (EXCEPTION-MARKER)           |  |   Direction of stack
+		+------------------------------+  |   unwinding by THROW.
+						  |
+						  |
+
+	The EXCEPTION-MARKER marks the entry as being an exception stack frame rather than an
+	ordinary return address, and it is this which THROW "notices" as it is unwinding the
+	stack.  (If you want to implement more advanced exceptions such as TRY...WITH then
+	you'll need to use a different value of marker if you want the old and new exception stack
+	frame layouts to coexist).
+
+	What happens if the executed word doesn't throw an exception?  It will eventually
+	return and call EXCEPTION-MARKER, so EXCEPTION-MARKER had better do something sensible
+	without us needing to modify EXIT.  This nicely gives us a suitable definition of
+	EXCEPTION-MARKER, namely a function that just drops the stack frame and itself
+	returns (thus "returning" from the original CATCH).
+
+	One thing to take from this is that exceptions are a relatively lightweight mechanism
+	in FORTH.
+)
+
+: EXCEPTION-MARKER
+	RDROP			( drop the original parameter stack pointer )
+	0			( there was no exception, this is the normal return path )
+;
+
+: CATCH		( xt -- exn? )
+	DSP@ 4+ >R		( save parameter stack pointer (+4 because of xt) on the return stack )
+	['] EXCEPTION-MARKER 4+	( push the address of the RDROP inside EXCEPTION-MARKER ... )
+	>R			( ... on to the return stack so it acts like a return address )
+	EXECUTE			( execute the nested function )
+;
+
+: THROW		( n -- )
+	?DUP IF			( only act if the exception code <> 0 )
+		RSP@ 			( get return stack pointer )
+		BEGIN
+			DUP R0 4- <		( RSP < R0 )
+		WHILE
+			DUP @			( get the return stack entry )
+			['] EXCEPTION-MARKER 4+ = IF	( found the EXCEPTION-MARKER on the return stack )
+				4+			( skip the EXCEPTION-MARKER on the return stack )
+				RSP!			( restore the return stack pointer )
+
+				( Restore the parameter stack. )
+				DUP DUP DUP		( reserve some working space so the stack for this word
+							  doesn't coincide with the part of the stack being restored )
+				R>			( get the saved parameter stack pointer | n dsp )
+				4-			( reserve space on the stack to store n )
+				SWAP OVER		( dsp n dsp )
+				!			( write n on the stack )
+				DSP! EXIT		( restore the parameter stack pointer, immediately exit )
+			THEN
+			4+
+		REPEAT
+
+		( No matching catch - print a message and restart the INTERPRETer. )
+		DROP
+
+		CASE
+		0 1- OF	( ABORT )
+			." ABORTED" CR
+		ENDOF
+			( default case )
+			." UNCAUGHT THROW "
+			DUP . CR
+		ENDCASE
+		QUIT
+	THEN
+;
+
+: ABORT		( -- )
+	0 1- THROW
+;
+
+(
+	Some high level ANS Forth CORE words are not presented in the original jonesforth. They
+	are included here without explanation. Most of them are adapted from bb4wforth.
+)
+
+: [CHAR] ( "<spaces>name" -- ) CHAR ['] LIT , , ; IMMEDIATE
+: 2OVER ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 ) 3 PICK 3 PICK ;
+: CELL+ ( a-addr1 -- a-addr2 ) 1 CELLS + ;
+: CHARS ( n1 -- n2 ) ;
+: CHAR+ ( c-addr1 -- c-addr2 ) 1 CHARS + ;
+: 2! ( x1 x2 a-addr -- ) SWAP OVER ! CELL+ ! ;
+: 2@ ( a-addr -- x1 x2 ) DUP CELL+ @ SWAP @ ;
+: MOVE ( addr1 addr2 u -- ) CMOVE ;
+: 2>R ( x1 x2 -- ) ( R: -- x1 x2 ) ['] SWAP , ['] >R , ['] >R , ; IMMEDIATE
+: 2R> ( -- x1 x2 ) ( R: x1 x2 -- ) ['] R> , ['] R> , ['] SWAP , ; IMMEDIATE
+: 2R@ ( -- x1 x2 ) ( R: x1 x2 -- x1 x2 )
+	2R> 2DUP 2>R ;
+
+\ TODO: Abort should reset LEAVE-SP
+
+CREATE LEAVE-SP 32 CELLS ALLOT
+LEAVE-SP LEAVE-SP !
+
+: LEAVE
+	['] UNLOOP ,
+	['] BRANCH ,
+	LEAVE-SP @ LEAVE-SP - 31 CELLS >
+	IF ABORT THEN
+	1 CELLS LEAVE-SP +!
+	HERE LEAVE-SP @ !
+	0 ,
+	; IMMEDIATE
+
+: DO	( -- here )
+	['] (DO) ,
+	HERE
+	; IMMEDIATE
+
+: LOOP   ( here -- )
+	['] (LOOP) , 
+	DUP HERE -
+	,
+	BEGIN
+		LEAVE-SP @ @ OVER >
+		LEAVE-SP @ LEAVE-SP >  AND
+	WHILE
+		HERE LEAVE-SP @ @ - LEAVE-SP @ @ !
+		1 CELLS NEGATE LEAVE-SP +!
+	REPEAT
+	DROP
+	; IMMEDIATE
+
+: +LOOP
+	['] (+LOOP) , 
+	HERE -
+	,
+	; IMMEDIATE
 
 (
 	DECOMPILER ----------------------------------------------------------------------
@@ -1273,151 +1444,6 @@
 
 : '	( "<spaces>name" -- xt )
 	WORD (FIND) >CFA
-;
-
-(
-	EXCEPTIONS ----------------------------------------------------------------------
-
-	Amazingly enough, exceptions can be implemented directly in FORTH, in fact rather easily.
-
-	The general usage is as follows:
-
-		: FOO ( n -- ) THROW ;
-
-		: TEST-EXCEPTIONS
-			25 ['] FOO CATCH	\ execute 25 FOO, catching any exception
-			?DUP IF
-				." called FOO and it threw exception number: "
-				. CR
-				DROP		\ we have to drop the argument of FOO (25)
-			THEN
-		;
-		\ prints: called FOO and it threw exception number: 25
-
-	CATCH runs an execution token and detects whether it throws any exception or not.  The
-	stack signature of CATCH is rather complicated:
-
-		( a_n-1 ... a_1 a_0 xt -- r_m-1 ... r_1 r_0 0 )		if xt did NOT throw an exception
-		( a_n-1 ... a_1 a_0 xt -- ?_n-1 ... ?_1 ?_0 e )		if xt DID throw exception 'e'
-
-	where a_i and r_i are the (arbitrary number of) argument and return stack contents
-	before and after xt is EXECUTEd.  Notice in particular the case where an exception
-	is thrown, the stack pointer is restored so that there are n of _something_ on the
-	stack in the positions where the arguments a_i used to be.  We don't really guarantee
-	what is on the stack -- perhaps the original arguments, and perhaps other nonsense --
-	it largely depends on the implementation of the word that was executed.
-
-	THROW, ABORT and a few others throw exceptions.
-
-	Exception numbers are non-zero integers.  By convention the positive numbers can be used
-	for app-specific exceptions and the negative numbers have certain meanings defined in
-	the ANS FORTH standard.  (For example, -1 is the exception thrown by ABORT).
-
-	0 THROW does nothing.  This is the stack signature of THROW:
-
-		( 0 -- )
-		( * e -- ?_n-1 ... ?_1 ?_0 e )	the stack is restored to the state from the corresponding CATCH
-
-	The implementation hangs on the definitions of CATCH and THROW and the state shared
-	between them.
-
-	Up to this point, the return stack has consisted merely of a list of return addresses,
-	with the top of the return stack being the return address where we will resume executing
-	when the current word EXITs.  However CATCH will push a more complicated 'exception stack
-	frame' on the return stack.  The exception stack frame records some things about the
-	state of execution at the time that CATCH was called.
-
-	When called, THROW walks up the return stack (the process is called 'unwinding') until
-	it finds the exception stack frame.  It then uses the data in the exception stack frame
-	to restore the state allowing execution to continue after the matching CATCH.  (If it
-	unwinds the stack and doesn't find the exception stack frame then it prints a message
-	and drops back to the prompt, which is also normal behaviour for so-called 'uncaught
-	exceptions').
-
-	This is what the exception stack frame looks like.  (As is conventional, the return stack
-	is shown growing downwards from higher to lower memory addresses).
-
-		+------------------------------+
-		| return address from CATCH    |   Notice this is already on the
-		|                              |   return stack when CATCH is called.
-		+------------------------------+
-		| original parameter stack     |
-		| pointer                      |
-		+------------------------------+  ^
-		| exception stack marker       |  |
-		| (EXCEPTION-MARKER)           |  |   Direction of stack
-		+------------------------------+  |   unwinding by THROW.
-						  |
-						  |
-
-	The EXCEPTION-MARKER marks the entry as being an exception stack frame rather than an
-	ordinary return address, and it is this which THROW "notices" as it is unwinding the
-	stack.  (If you want to implement more advanced exceptions such as TRY...WITH then
-	you'll need to use a different value of marker if you want the old and new exception stack
-	frame layouts to coexist).
-
-	What happens if the executed word doesn't throw an exception?  It will eventually
-	return and call EXCEPTION-MARKER, so EXCEPTION-MARKER had better do something sensible
-	without us needing to modify EXIT.  This nicely gives us a suitable definition of
-	EXCEPTION-MARKER, namely a function that just drops the stack frame and itself
-	returns (thus "returning" from the original CATCH).
-
-	One thing to take from this is that exceptions are a relatively lightweight mechanism
-	in FORTH.
-)
-
-: EXCEPTION-MARKER
-	RDROP			( drop the original parameter stack pointer )
-	0			( there was no exception, this is the normal return path )
-;
-
-: CATCH		( xt -- exn? )
-	DSP@ 4+ >R		( save parameter stack pointer (+4 because of xt) on the return stack )
-	['] EXCEPTION-MARKER 4+	( push the address of the RDROP inside EXCEPTION-MARKER ... )
-	>R			( ... on to the return stack so it acts like a return address )
-	EXECUTE			( execute the nested function )
-;
-
-: THROW		( n -- )
-	?DUP IF			( only act if the exception code <> 0 )
-		RSP@ 			( get return stack pointer )
-		BEGIN
-			DUP R0 4- <		( RSP < R0 )
-		WHILE
-			DUP @			( get the return stack entry )
-			['] EXCEPTION-MARKER 4+ = IF	( found the EXCEPTION-MARKER on the return stack )
-				4+			( skip the EXCEPTION-MARKER on the return stack )
-				RSP!			( restore the return stack pointer )
-
-				( Restore the parameter stack. )
-				DUP DUP DUP		( reserve some working space so the stack for this word
-							  doesn't coincide with the part of the stack being restored )
-				R>			( get the saved parameter stack pointer | n dsp )
-				4-			( reserve space on the stack to store n )
-				SWAP OVER		( dsp n dsp )
-				!			( write n on the stack )
-				DSP! EXIT		( restore the parameter stack pointer, immediately exit )
-			THEN
-			4+
-		REPEAT
-
-		( No matching catch - print a message and restart the INTERPRETer. )
-		DROP
-
-		CASE
-		0 1- OF	( ABORT )
-			." ABORTED" CR
-		ENDOF
-			( default case )
-			." UNCAUGHT THROW "
-			DUP . CR
-		ENDCASE
-		QUIT
-	THEN
-;
-
-: ABORT		( -- )
-	0 1- THROW
 ;
 
 ( Print a stack trace by walking up the return stack. )
