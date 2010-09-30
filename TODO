@@ -58,8 +58,9 @@ Core Words not yet implemented
 Core extension words not yet implemented
 	2>R		fixed using bb4wforth's version.
 	2R>		fixed using bb4wforth's version.
+	?DO		implemented by ccwu.
 
-	#TIB .( 2R@ ?DO C" COMPILE, CONVERT ERASE EXPECT MARKER
+	#TIB .( 2R@ C" COMPILE, CONVERT ERASE EXPECT MARKER
 	PAD PARSE QUERY REFILL RESTORE-INPUT ROLL SAVE-INPUT SOURCE-ID
 	SPAN TIB U> 
 

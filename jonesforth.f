@@ -1188,7 +1188,7 @@ LEAVE-SP LEAVE-SP !
 	0 ,
 	; IMMEDIATE
 
-: RESOLVE-LEAVES
+: RESOLVE-LEAVES ( here - )
 	BEGIN
 		LEAVE-SP @ @ OVER >
 		LEAVE-SP @ LEAVE-SP >  AND
@@ -1199,22 +1199,38 @@ LEAVE-SP LEAVE-SP !
 	DROP
 	;
 
-: DO	( -- here )
+: DO	( -- here 0 )
 	['] (DO) ,
-	HERE
+	HERE 0
 	; IMMEDIATE
 
-: LOOP   ( here -- )
+: ?DO   ( -- here 1 )
+	['] 2DUP ,
+	['] <> ,
+	['] 0BRANCH ,
+	0 ,
+	['] (DO) ,
+	HERE 1
+	; IMMEDIATE
+
+
+: RESOLVE-DO ( here 0|1 -- here )
+	IF ( ?DO )
+		DUP HERE - ,
+		DUP 2 CELLS - HERE OVER - SWAP !
+	ELSE ( DO )
+		DUP HERE - ,
+	THEN ;
+
+: LOOP   ( here 0|1 -- )
 	['] (LOOP) , 
-	DUP HERE -
-	,
+	RESOLVE-DO
 	RESOLVE-LEAVES
 	; IMMEDIATE
 
-: +LOOP   ( here -- )
+: +LOOP   ( here 0|1 -- )
 	['] (+LOOP) , 
-	DUP HERE -
-	,
+	RESOLVE-DO
 	RESOLVE-LEAVES
 	; IMMEDIATE
 
