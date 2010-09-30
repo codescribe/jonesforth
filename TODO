@@ -47,10 +47,11 @@ Core Words not yet implemented
 	LEAVE		implemented by ccwu using a leave stack of depth 31.
 			ABORT or QUIT should reset the leave stack pointer,
 			which is not yet implemented.
+	ABS		implemented by ccwu.
 
 	# #> #S */ */MOD <# >BODY >IN >NUMBER
-	ABORT" ABS ACCEPT COUNT ENVIRONMENT?
-	EVALUATE FILL FM/MOD HOLD LEAVE M* MAX MIN
+	ABORT" ACCEPT COUNT ENVIRONMENT?
+	EVALUATE FILL FM/MOD HOLD M* MAX MIN
 	POSTPONE R@ S>D SIGN SM/REM SOURCE U< UM* UM/MOD
 	LSHIFT RSHIFT 
 

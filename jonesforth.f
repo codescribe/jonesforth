@@ -1172,8 +1172,8 @@
 : 2R> ( -- x1 x2 ) ( R: x1 x2 -- ) ['] R> , ['] R> , ['] SWAP , ; IMMEDIATE
 : 2R@ ( -- x1 x2 ) ( R: x1 x2 -- x1 x2 )
 	2R> 2DUP 2>R ;
-
-\ TODO: Abort should reset LEAVE-SP
+: ABS   ( n -- u)
+	DUP 0< IF NEGATE THEN ;
 
 CREATE LEAVE-SP 32 CELLS ALLOT
 LEAVE-SP LEAVE-SP !
